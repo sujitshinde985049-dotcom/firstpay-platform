@@ -18,6 +18,10 @@ const items = [
   { href: "/dashboard/documents", label: "Documents" },
   { href: "/dashboard/notifications", label: "Notifications" },
   { href: "/dashboard/profile", label: "Organisation profile" },
+  { href: "/dashboard/integrations/providers", label: "Providers" },
+  { href: "/dashboard/integrations/provider-status", label: "Provider status" },
+  { href: "/dashboard/integrations/webhooks", label: "Provider webhooks" },
+  { href: "/dashboard/onboarding", label: "Onboarding" },
   { href: "/dashboard/settings", label: "Settings" },
 ];
 

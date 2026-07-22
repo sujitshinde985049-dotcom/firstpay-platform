@@ -100,10 +100,8 @@ export type Tables<PublicTableName extends keyof PublicSchema["Tables"]> =
     ? Row
     : never;
 
-export type TablesInsert<
-  PublicTableName extends keyof PublicSchema["Tables"],
-> = PublicSchema["Tables"][PublicTableName]["Insert"];
+export type TablesInsert<PublicTableName extends keyof PublicSchema["Tables"]> =
+  PublicSchema["Tables"][PublicTableName]["Insert"];
 
-export type TablesUpdate<
-  PublicTableName extends keyof PublicSchema["Tables"],
-> = PublicSchema["Tables"][PublicTableName]["Update"];
+export type TablesUpdate<PublicTableName extends keyof PublicSchema["Tables"]> =
+  PublicSchema["Tables"][PublicTableName]["Update"];
