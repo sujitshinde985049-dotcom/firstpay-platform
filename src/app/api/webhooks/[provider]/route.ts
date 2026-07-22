@@ -23,6 +23,9 @@ export async function POST(
   request: NextRequest,
   { params }: { params: Promise<{ provider: string }> },
 ) {
+  const contentLength = Number(request.headers.get("content-length") ?? 0);
+  if (contentLength > 1024 * 1024)
+    return NextResponse.json({ error: "Payload too large" }, { status: 413 });
   const { provider: rawProvider } = await params;
   if (!providers.has(rawProvider as PaymentProvider))
     return NextResponse.json({ error: "Unknown provider" }, { status: 404 });

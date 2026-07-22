@@ -49,5 +49,10 @@ export async function updateSession(request: NextRequest) {
     return NextResponse.redirect(loginUrl);
   }
 
+  if (isProtected) {
+    response.headers.set("X-Robots-Tag", "noindex, nofollow, noarchive");
+    response.headers.set("Cache-Control", "private, no-store, max-age=0");
+  }
+
   return response;
 }
