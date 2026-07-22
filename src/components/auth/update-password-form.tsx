@@ -59,7 +59,9 @@ export function UpdatePasswordForm() {
         {...register("confirmPassword")}
       />
       {serverError ? (
-        <p className="text-sm text-red-600">{serverError}</p>
+        <p role="alert" className="text-sm text-red-600">
+          {serverError}
+        </p>
       ) : null}
       <button
         type="submit"

@@ -1,6 +1,7 @@
 import { Search, Shield, UserCog } from "lucide-react";
 import { PageHeader } from "@/components/admin/page-header";
 import { StatusBadge } from "@/components/admin/status-badge";
+import { SubmitButton } from "@/components/admin/submit-button";
 import {
   assignUserRoleAction,
   deleteUserAction,
@@ -105,15 +106,21 @@ export default async function UsersPage({
                         name="active"
                         value={user.deactivated_at ? "true" : "false"}
                       />
-                      <button className="rounded-lg border px-3 py-2 text-xs font-semibold">
+                      <SubmitButton
+                        pending="Saving…"
+                        className="rounded-lg border px-3 py-2 text-xs font-semibold disabled:opacity-50"
+                      >
                         {user.deactivated_at ? "Activate" : "Deactivate"}
-                      </button>
+                      </SubmitButton>
                     </form>
                     <form action={deleteUserAction}>
                       <input type="hidden" name="id" value={user.id} />
-                      <button className="rounded-lg border border-red-200 px-3 py-2 text-xs font-semibold text-red-600">
+                      <SubmitButton
+                        pending="Deleting…"
+                        className="rounded-lg border border-red-200 px-3 py-2 text-xs font-semibold text-red-600 disabled:opacity-50"
+                      >
                         Soft delete
-                      </button>
+                      </SubmitButton>
                     </form>
                   </>
                 ) : null}
@@ -159,9 +166,12 @@ export default async function UsersPage({
                           </option>
                         ))}
                     </select>
-                    <button className="rounded-lg bg-blue-700 px-3 py-2 text-xs font-semibold text-white">
+                    <SubmitButton
+                      pending="Assigning…"
+                      className="rounded-lg bg-blue-700 px-3 py-2 text-xs font-semibold text-white disabled:opacity-50"
+                    >
                       Assign role
-                    </button>
+                    </SubmitButton>
                   </form>
                 );
               })}

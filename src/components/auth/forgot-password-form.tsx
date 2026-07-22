@@ -13,6 +13,7 @@ type ForgotPasswordValues = z.infer<typeof schema>;
 
 export function ForgotPasswordForm() {
   const [sent, setSent] = useState(false);
+  const [serverError, setServerError] = useState<string>();
   const {
     register,
     handleSubmit,
@@ -20,10 +21,15 @@ export function ForgotPasswordForm() {
   } = useForm<ForgotPasswordValues>({ resolver: zodResolver(schema) });
 
   const onSubmit = handleSubmit(async ({ email }) => {
+    setServerError(undefined);
     const supabase = createClient();
-    await supabase.auth.resetPasswordForEmail(email, {
+    const { error } = await supabase.auth.resetPasswordForEmail(email, {
       redirectTo: `${window.location.origin}/auth/callback?next=/update-password`,
     });
+    if (error) {
+      setServerError("Unable to request a reset link. Please try again later.");
+      return;
+    }
     setSent(true);
   });
 
@@ -52,6 +58,11 @@ export function ForgotPasswordForm() {
       >
         {isSubmitting ? "Sending…" : "Send reset link"}
       </button>
+      {serverError ? (
+        <p role="alert" className="text-sm text-red-600">
+          {serverError}
+        </p>
+      ) : null}
       <Link
         href="/login"
         className="block text-center text-sm text-blue-700 hover:underline dark:text-blue-400"

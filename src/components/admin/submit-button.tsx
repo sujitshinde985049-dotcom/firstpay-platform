@@ -6,10 +6,14 @@ export function SubmitButton({
   children,
   pending = "Saving…",
   tone = "primary",
+  className,
+  "aria-label": ariaLabel,
 }: {
   children: React.ReactNode;
   pending?: string;
   tone?: "primary" | "danger" | "secondary";
+  className?: string;
+  "aria-label"?: string;
 }) {
   const { pending: isPending } = useFormStatus();
   const styles =
@@ -21,8 +25,12 @@ export function SubmitButton({
   return (
     <button
       type="submit"
+      aria-label={ariaLabel}
       disabled={isPending}
-      className={`rounded-lg px-4 py-2.5 text-sm font-semibold disabled:cursor-not-allowed disabled:opacity-50 ${styles}`}
+      className={
+        className ??
+        `rounded-lg px-4 py-2.5 text-sm font-semibold disabled:cursor-not-allowed disabled:opacity-50 ${styles}`
+      }
     >
       {isPending ? pending : children}
     </button>

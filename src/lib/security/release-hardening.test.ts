@@ -2,6 +2,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import { safeInternalRedirect } from "../auth/safe-redirect";
 import { parsePublicEnvironment, parseServerEnvironment } from "../env";
 import { redact } from "../observability/logger";
+import { verifyDocumentedWebhook } from "../payments/webhooks/gateway";
 import { UnconfiguredRateLimitAdapter } from "./rate-limit";
 describe("release hardening", () => {
   afterEach(() => vi.unstubAllEnvs());
@@ -40,5 +41,21 @@ describe("release hardening", () => {
       password: "[REDACTED]",
       nested: { token: "[REDACTED]", safe: "ok" },
     });
+  });
+  it("rejects malformed and stale webhook timestamps", () => {
+    const malformed = new Headers({
+      "x-webhook-signature": "signature",
+      "x-webhook-timestamp": "not-a-number",
+    });
+    const stale = new Headers({
+      "x-webhook-signature": "signature",
+      "x-webhook-timestamp": String(Date.now() - 600_000),
+    });
+    expect(verifyDocumentedWebhook("cashfree", "{}", malformed, "secret")).toBe(
+      false,
+    );
+    expect(verifyDocumentedWebhook("cashfree", "{}", stale, "secret")).toBe(
+      false,
+    );
   });
 });

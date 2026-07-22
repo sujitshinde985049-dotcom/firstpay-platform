@@ -8,12 +8,14 @@ export default defineConfig({
     baseURL: process.env.PLAYWRIGHT_BASE_URL ?? "http://localhost:3100",
     trace: "retain-on-failure",
   },
-  webServer: {
-    command: "node node_modules/next/dist/bin/next dev --port 3100",
-    url: "http://localhost:3100",
-    reuseExistingServer: false,
-    timeout: 120000,
-  },
+  webServer: process.env.PLAYWRIGHT_BASE_URL
+    ? undefined
+    : {
+        command: "node node_modules/next/dist/bin/next start --port 3100",
+        url: "http://localhost:3100",
+        reuseExistingServer: false,
+        timeout: 120000,
+      },
   projects: [
     { name: "chromium-desktop", use: { ...devices["Desktop Chrome"] } },
     {

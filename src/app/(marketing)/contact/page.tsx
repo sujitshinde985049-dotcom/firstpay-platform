@@ -28,26 +28,18 @@ export default function ContactPage() {
               operations, risk, and finance requirements.
             </p>
             <div className="mt-8 space-y-5">
-              {[
-                [
-                  Mail,
-                  "enterprise@firstpay.in",
-                  "mailto:enterprise@firstpay.in",
-                ],
-                [Clock3, "Monday–Friday, 9:30–18:30 IST", "#"],
-                [MapPin, "India", "#"],
-              ].map(([Icon, label, href]) => (
-                <a
-                  key={label as string}
-                  href={href as string}
-                  className="flex items-center gap-4 text-sm"
-                >
-                  <span className="grid size-10 place-items-center rounded-xl bg-blue-50 text-blue-700 dark:bg-blue-950 dark:text-blue-300">
-                    <Icon className="size-5" />
-                  </span>
-                  {label as string}
-                </a>
-              ))}
+              <a
+                href="mailto:enterprise@firstpay.in"
+                className="flex items-center gap-4 text-sm"
+              >
+                <ContactIcon icon={Mail} /> enterprise@firstpay.in
+              </a>
+              <div className="flex items-center gap-4 text-sm">
+                <ContactIcon icon={Clock3} /> Monday–Friday, 9:30–18:30 IST
+              </div>
+              <div className="flex items-center gap-4 text-sm">
+                <ContactIcon icon={MapPin} /> India
+              </div>
             </div>
           </div>
           <form
@@ -90,6 +82,15 @@ export default function ContactPage() {
     </main>
   );
 }
+
+function ContactIcon({ icon: Icon }: { icon: typeof Mail }) {
+  return (
+    <span className="grid size-10 place-items-center rounded-xl bg-blue-50 text-blue-700 dark:bg-blue-950 dark:text-blue-300">
+      <Icon className="size-5" aria-hidden />
+    </span>
+  );
+}
+
 function ContactField({
   label,
   name,

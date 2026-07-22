@@ -1,3 +1,4 @@
+import { createHash } from "node:crypto";
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import {
@@ -31,6 +32,8 @@ export async function POST(
     return NextResponse.json({ error: "Unknown provider" }, { status: 404 });
   const provider = rawProvider as PaymentProvider;
   const raw = await request.text();
+  if (Buffer.byteLength(raw, "utf8") > 1024 * 1024)
+    return NextResponse.json({ error: "Payload too large" }, { status: 413 });
   const secret = process.env[envKeys[provider]];
   if (!secret)
     return NextResponse.json(
@@ -45,7 +48,7 @@ export async function POST(
   const eventId =
     request.headers.get("x-razorpay-event-id") ??
     request.headers.get("x-idempotency-key") ??
-    crypto.randomUUID();
+    createHash("sha256").update(raw).digest("hex");
   let parsed: unknown = {};
   try {
     parsed = JSON.parse(raw);

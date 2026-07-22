@@ -1,5 +1,6 @@
 import { Flag } from "lucide-react";
 import { PageHeader } from "@/components/admin/page-header";
+import { SubmitButton } from "@/components/admin/submit-button";
 import { saveFeatureFlagAction } from "@/lib/admin/actions";
 import { createClient } from "@/lib/supabase/server";
 
@@ -60,11 +61,12 @@ export default async function FeatureFlagsPage() {
                 <span className="text-sm font-medium capitalize">
                   {key.replaceAll("_", " ")}
                 </span>
-                <button
-                  className={`rounded-full px-3 py-1 text-xs font-semibold ${flag?.enabled ? "bg-emerald-100 text-emerald-700" : "bg-slate-200 text-slate-600 dark:bg-slate-800"}`}
+                <SubmitButton
+                  pending="Saving…"
+                  className={`rounded-full px-3 py-1 text-xs font-semibold disabled:opacity-50 ${flag?.enabled ? "bg-emerald-100 text-emerald-700" : "bg-slate-200 text-slate-600 dark:bg-slate-800"}`}
                 >
                   {flag?.enabled ? "Enabled" : "Disabled"}
-                </button>
+                </SubmitButton>
               </form>
             );
           })}
@@ -105,9 +107,7 @@ export default async function FeatureFlagsPage() {
             <option value="true">Enable</option>
             <option value="false">Disable</option>
           </select>
-          <button className="rounded-lg bg-blue-700 px-4 py-2.5 text-sm font-semibold text-white">
-            Save override
-          </button>
+          <SubmitButton pending="Saving override…">Save override</SubmitButton>
         </form>
         <div className="mt-6 overflow-x-auto">
           <table className="w-full min-w-[600px] text-left text-sm">

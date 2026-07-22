@@ -22,10 +22,12 @@ export function verifyDocumentedWebhook(
   if (provider === "cashfree") {
     const received = headers.get("x-webhook-signature");
     const timestamp = headers.get("x-webhook-timestamp");
+    const timestampMs = Number(timestamp);
     if (
       !received ||
       !timestamp ||
-      Math.abs(Date.now() - Number(timestamp)) > 300000
+      !Number.isFinite(timestampMs) ||
+      Math.abs(Date.now() - timestampMs) > 300000
     )
       return false;
     return safeEqual(
