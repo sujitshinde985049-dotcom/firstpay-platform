@@ -6,7 +6,18 @@ export const dynamic = "force-dynamic";
 
 const items = [
   { href: "/dashboard", label: "Overview" },
+  { href: "/dashboard/customers", label: "Customers" },
+  { href: "/dashboard/mandates", label: "Mandates" },
+  { href: "/dashboard/payments", label: "Payments" },
+  { href: "/dashboard/settlements", label: "Settlements" },
+  { href: "/dashboard/leads", label: "Leads" },
+  { href: "/dashboard/reports", label: "Reports" },
   { href: "/dashboard/team", label: "Team" },
+  { href: "/dashboard/webhooks", label: "Webhooks" },
+  { href: "/dashboard/api-credentials", label: "API credentials" },
+  { href: "/dashboard/documents", label: "Documents" },
+  { href: "/dashboard/notifications", label: "Notifications" },
+  { href: "/dashboard/profile", label: "Organisation profile" },
   { href: "/dashboard/settings", label: "Settings" },
 ];
 

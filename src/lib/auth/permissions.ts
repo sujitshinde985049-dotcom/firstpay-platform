@@ -18,6 +18,20 @@ export const permissions = [
   "support.manage",
   "developer.read",
   "developer.manage",
+  "customers.read",
+  "customers.manage",
+  "mandates.read",
+  "mandates.manage",
+  "payments.read",
+  "payments.manage",
+  "settlements.read",
+  "settlements.manage",
+  "reports.read",
+  "reports.export",
+  "webhooks.read",
+  "webhooks.manage",
+  "documents.read",
+  "documents.manage",
 ] as const;
 
 export type Permission = (typeof permissions)[number];
