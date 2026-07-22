@@ -15,6 +15,14 @@ const items = [
   { href: "/super-admin/announcements", label: "Announcements" },
   { href: "/super-admin/media", label: "Media" },
   { href: "/super-admin/cms", label: "CMS" },
+  { href: "/super-admin/blog", label: "Blog" },
+  { href: "/super-admin/seo", label: "SEO" },
+  { href: "/super-admin/email-templates", label: "Email templates" },
+  { href: "/super-admin/notifications", label: "Notifications" },
+  { href: "/super-admin/analytics", label: "Analytics" },
+  { href: "/super-admin/system-health", label: "System health" },
+  { href: "/super-admin/integrations", label: "Integrations" },
+  { href: "/super-admin/search", label: "Global search" },
   { href: "/super-admin/settings", label: "Settings" },
 ];
 

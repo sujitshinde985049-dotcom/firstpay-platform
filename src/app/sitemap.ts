@@ -11,6 +11,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
     "/recurring-payments",
     "/mandate-management",
     "/developers",
+    "/api-docs",
     "/industries",
     "/about",
     "/contact",

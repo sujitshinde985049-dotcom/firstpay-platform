@@ -226,16 +226,14 @@ async function addAdminMembership(
     .eq("name", "Admin")
     .single();
   if (member && role)
-    await supabase
-      .from("organisation_member_roles")
-      .upsert(
-        {
-          organisation_id: organisationId,
-          member_id: member.id,
-          role_id: role.id,
-        },
-        { onConflict: "organisation_id,member_id,role_id" },
-      );
+    await supabase.from("organisation_member_roles").upsert(
+      {
+        organisation_id: organisationId,
+        member_id: member.id,
+        role_id: role.id,
+      },
+      { onConflict: "organisation_id,member_id,role_id" },
+    );
 }
 
 export async function resendInvitationAction(formData: FormData) {
@@ -344,16 +342,14 @@ export async function setRolePermissionAction(formData: FormData) {
   const enabled = formData.get("enabled") === "true";
   const supabase = await createClient();
   if (enabled) {
-    await supabase
-      .from("organisation_role_permissions")
-      .upsert(
-        {
-          organisation_id: organisationId,
-          role_id: roleId,
-          permission_id: permissionId,
-        },
-        { onConflict: "organisation_id,role_id,permission_id" },
-      );
+    await supabase.from("organisation_role_permissions").upsert(
+      {
+        organisation_id: organisationId,
+        role_id: roleId,
+        permission_id: permissionId,
+      },
+      { onConflict: "organisation_id,role_id,permission_id" },
+    );
   } else {
     await supabase
       .from("organisation_role_permissions")
@@ -561,6 +557,11 @@ export async function saveCmsEntryAction(formData: FormData) {
       .enum([
         "homepage",
         "hero",
+        "solution",
+        "about",
+        "contact",
+        "developer",
+        "industry",
         "statistic",
         "footer",
         "navigation",
@@ -571,6 +572,7 @@ export async function saveCmsEntryAction(formData: FormData) {
         "blog",
         "legal",
         "seo",
+        "dynamic_page",
       ])
       .parse(formData.get("entry_type")),
     slug: z.string().min(1).parse(formData.get("slug")),
@@ -580,13 +582,20 @@ export async function saveCmsEntryAction(formData: FormData) {
       metadata: String(formData.get("metadata") ?? ""),
     },
     status: z
-      .enum(["draft", "published", "archived"])
+      .enum(["draft", "scheduled", "published", "archived"])
       .parse(formData.get("status")),
     sort_order: Number(formData.get("sort_order") ?? 0),
     updated_by: user.id,
     created_by: user.id,
     published_at:
       formData.get("status") === "published" ? new Date().toISOString() : null,
+    scheduled_at: String(formData.get("scheduled_at") ?? "") || null,
+    seo: {
+      title: String(formData.get("seo_title") ?? ""),
+      description: String(formData.get("seo_description") ?? ""),
+      canonical: String(formData.get("canonical") ?? ""),
+      robots: String(formData.get("robots") ?? "index,follow"),
+    },
   };
   if (id)
     await supabase
@@ -625,6 +634,7 @@ export async function uploadMediaAction(formData: FormData) {
     "image/png",
     "image/webp",
     "image/gif",
+    "image/svg+xml",
     "application/pdf",
   ];
   if (!allowed.includes(file.type) || file.size > 10 * 1024 * 1024)

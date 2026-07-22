@@ -8,6 +8,11 @@ import { createClient } from "@/lib/supabase/server";
 const entryTypes = [
   "homepage",
   "hero",
+  "solution",
+  "about",
+  "contact",
+  "developer",
+  "industry",
   "statistic",
   "footer",
   "navigation",
@@ -18,6 +23,7 @@ const entryTypes = [
   "blog",
   "legal",
   "seo",
+  "dynamic_page",
 ];
 
 export default async function CmsPage({
@@ -84,10 +90,26 @@ export default async function CmsPage({
                 className="mt-2 w-full rounded-lg border bg-slate-50 px-3 py-2.5 font-normal dark:bg-slate-900"
               >
                 <option>draft</option>
+                <option>scheduled</option>
                 <option>published</option>
                 <option>archived</option>
               </select>
             </label>
+            <Field
+              name="scheduled_at"
+              label="Publish schedule"
+              type="datetime-local"
+            />
+            <Field name="seo_title" label="SEO title" />
+            <label className="text-sm font-semibold">
+              SEO description
+              <textarea
+                name="seo_description"
+                rows={3}
+                className="mt-2 w-full rounded-lg border bg-slate-50 px-3 py-2.5 font-normal dark:bg-slate-900"
+              />
+            </label>
+            <Field name="canonical" label="Canonical URL" />
             <Field name="sort_order" label="Sort order" type="number" />
             <SubmitButton>Create entry</SubmitButton>
           </form>
@@ -171,6 +193,7 @@ export default async function CmsPage({
                         className="mt-2 w-full rounded-lg border bg-slate-50 px-3 py-2.5 font-normal dark:bg-slate-900"
                       >
                         <option>draft</option>
+                        <option>scheduled</option>
                         <option>published</option>
                         <option>archived</option>
                       </select>
