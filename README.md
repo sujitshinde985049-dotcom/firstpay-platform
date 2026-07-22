@@ -15,6 +15,7 @@ The repository also includes FirstPay's complete enterprise marketing website, w
 - GitHub Actions and Vercel-ready configuration
 - Premium responsive marketing website with Framer Motion interactions
 - Open Graph imagery, structured data, sitemap, robots directives, and per-page metadata
+- Super Admin command centre with client, user, plan, feature, audit, announcement, media, CMS, and settings management
 
 ## Requirements
 
@@ -79,6 +80,7 @@ The design system lives in `src/app/globals.css` and defines FirstPay's navy, el
 - [Multi-tenant model](./MULTI_TENANT.md)
 - [Security](./SECURITY.md)
 - [Supabase setup](./SUPABASE_SETUP.md)
+- [Super Admin portal](./ADMIN_PORTAL.md)
 
 ## Deployment
 

@@ -26,3 +26,7 @@
 ## UI
 
 Organisation and platform dashboards share an accessible responsive shell with sidebar, top navigation, breadcrumbs, logout, and theme controls. Tailwind tokens in `globals.css` define the FirstPay corporate palette for light and dark modes.
+
+## Super Admin boundary
+
+The Super Admin portal uses user-scoped Supabase clients for RLS-protected platform data. Server actions call `requireSuperAdmin()` independently of layout protection and record sensitive operations in `audit_events`. The server-only service-role client is limited to Supabase Auth Admin and Storage operations that cannot be performed with a user session.
