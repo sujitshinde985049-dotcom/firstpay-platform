@@ -2,6 +2,8 @@
 
 Secure multi-tenant SaaS foundation built with Next.js App Router, Supabase, PostgreSQL, TypeScript, and Tailwind CSS.
 
+The repository also includes FirstPay's complete enterprise marketing website, with a mobile-first design system, product education, developer content, legal pages, and technical SEO.
+
 ## Capabilities
 
 - Invitation-only Supabase Auth with login, logout, password recovery, and cookie-backed SSR sessions
@@ -11,6 +13,8 @@ Secure multi-tenant SaaS foundation built with Next.js App Router, Supabase, Pos
 - Responsive organisation and platform dashboards with light/dark themes
 - React Hook Form and Zod validation
 - GitHub Actions and Vercel-ready configuration
+- Premium responsive marketing website with Framer Motion interactions
+- Open Graph imagery, structured data, sitemap, robots directives, and per-page metadata
 
 ## Requirements
 
@@ -47,7 +51,8 @@ Read [SUPABASE_SETUP.md](./SUPABASE_SETUP.md) before applying the migration.
 ```text
 src/
 ├── app/              # Routes, layouts, auth callback, and server actions
-├── components/       # Auth, dashboard shell, provider, and UI components
+│   └── (marketing)/  # Public website pages with shared header and footer
+├── components/       # Auth, dashboard, marketing, provider, and UI components
 ├── config/           # Application configuration
 ├── features/         # Domain modules
 ├── hooks/            # Shared React hooks
@@ -59,6 +64,14 @@ src/
 └── types/            # Shared types
 supabase/migrations/  # Versioned PostgreSQL schema and RLS policies
 ```
+
+## Public website routes
+
+The marketing surface includes Home, Solutions, UPI AutoPay, e-NACH, Recurring Payments, Mandate Management, Developers, Industries, About, Contact, FAQ, Blog, article details, Privacy, Terms, Refund Policy, Data Security, and System Status.
+
+Shared public components are server-rendered by default. Client JavaScript is limited to the sticky responsive navigation, theme controls, and subtle reduced-motion-aware Framer Motion reveals. The generated social preview is stored at `public/og.png`.
+
+The design system lives in `src/app/globals.css` and defines FirstPay's navy, electric blue, teal, emerald, surface, border, focus, and elevation tokens for light and dark themes.
 
 ## Documentation
 

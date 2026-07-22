@@ -1,31 +1,108 @@
 @import "tailwindcss";
 
 :root {
-  --background: #f8fafc;
-  --foreground: #0f172a;
-  --brand-primary: #1d4ed8;
-  --brand-secondary: #0f766e;
-  --brand-accent: #10b981;
+  --background: #f7f9fc;
+  --foreground: #0b1220;
   --surface: #ffffff;
-  --border: #e2e8f0;
+  --surface-raised: #ffffff;
+  --surface-muted: #eef3f9;
+  --border: #dce4ef;
+  --muted: #526079;
+  --brand-primary: #155eef;
+  --brand-primary-strong: #073aa3;
+  --brand-secondary: #087f8c;
+  --brand-accent: #12b76a;
+  --brand-ink: #071126;
+  --focus: #2e90fa;
+  --shadow-enterprise: 0 24px 80px rgba(15, 40, 80, 0.12);
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
+  --color-surface: var(--surface);
+  --color-surface-raised: var(--surface-raised);
+  --color-surface-muted: var(--surface-muted);
+  --color-border: var(--border);
+  --color-muted: var(--muted);
+  --color-brand: var(--brand-primary);
+  --color-brand-strong: var(--brand-primary-strong);
+  --color-accent: var(--brand-accent);
+  --color-ink: var(--brand-ink);
   --font-sans: Arial, Helvetica, sans-serif;
   --font-mono: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
 }
 
 .dark {
-  --background: #020617;
-  --foreground: #f8fafc;
-  --surface: #0f172a;
-  --border: #1e293b;
+  --background: #050a14;
+  --foreground: #f3f6fb;
+  --surface: #0b1323;
+  --surface-raised: #111c31;
+  --surface-muted: #0e192c;
+  --border: #22304a;
+  --muted: #9aa8bd;
+  --brand-primary: #6ba5ff;
+  --brand-primary-strong: #b5d1ff;
+  --brand-secondary: #5dd3df;
+  --brand-accent: #47d998;
+  --brand-ink: #02050b;
+  --shadow-enterprise: 0 30px 90px rgba(0, 0, 0, 0.38);
+}
+
+* {
+  border-color: var(--border);
+}
+
+html {
+  scroll-behavior: smooth;
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
   font-family: var(--font-sans);
+  text-rendering: optimizeLegibility;
+}
+
+::selection {
+  background: color-mix(in srgb, var(--brand-primary) 26%, transparent);
+}
+
+:focus-visible {
+  outline: 3px solid var(--focus);
+  outline-offset: 3px;
+}
+
+.marketing-grid {
+  background-image:
+    linear-gradient(
+      color-mix(in srgb, var(--border) 55%, transparent) 1px,
+      transparent 1px
+    ),
+    linear-gradient(
+      90deg,
+      color-mix(in srgb, var(--border) 55%, transparent) 1px,
+      transparent 1px
+    );
+  background-size: 56px 56px;
+  mask-image: linear-gradient(to bottom, black 0%, transparent 88%);
+}
+
+.text-balance {
+  text-wrap: balance;
+}
+
+.enterprise-shadow {
+  box-shadow: var(--shadow-enterprise);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
 }
