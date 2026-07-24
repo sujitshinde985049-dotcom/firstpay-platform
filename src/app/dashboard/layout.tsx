@@ -1,6 +1,8 @@
 import type { ReactNode } from "react";
 import { AppShell } from "@/components/layout/app-shell";
 import { requireUser } from "@/lib/auth/user";
+import { getIsSuperAdmin } from "@/lib/auth/permissions";
+import { redirect } from "next/navigation";
 
 export const dynamic = "force-dynamic";
 
@@ -31,6 +33,7 @@ export default async function DashboardLayout({
   children: ReactNode;
 }) {
   const user = await requireUser();
+  if (await getIsSuperAdmin()) redirect("/super-admin");
   return (
     <AppShell
       title="Workspace"
