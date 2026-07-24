@@ -7,7 +7,6 @@ import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { FormField } from "@/components/ui/form-field";
-import { safeInternalRedirect } from "@/lib/auth/safe-redirect";
 import { createClient } from "@/lib/supabase/client";
 
 const schema = z.object({
@@ -39,7 +38,10 @@ export function LoginForm() {
       return;
     }
 
-    router.replace(safeInternalRedirect(searchParams.get("next")));
+    const next = searchParams.get("next");
+    const redirectUrl = new URL("/auth/redirect", window.location.origin);
+    if (next) redirectUrl.searchParams.set("next", next);
+    router.replace(`${redirectUrl.pathname}${redirectUrl.search}`);
     router.refresh();
   });
 

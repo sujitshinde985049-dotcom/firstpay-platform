@@ -3,6 +3,7 @@ import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { requireUser } from "@/lib/auth/user";
 import { createClient } from "@/lib/supabase/server";
+import { getIsSuperAdmin } from "@/lib/auth/permissions";
 
 export type CurrentOrganisation = {
   id: string;
@@ -45,6 +46,7 @@ export const getCurrentOrganisation = cache(
 );
 
 export async function requireOrganisation() {
+  if (await getIsSuperAdmin()) redirect("/super-admin");
   const organisation = await getCurrentOrganisation();
 
   if (!organisation) {

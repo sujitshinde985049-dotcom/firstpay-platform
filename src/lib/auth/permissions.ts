@@ -65,7 +65,7 @@ export const hasPermission = cache(
   },
 );
 
-export const requireSuperAdmin = cache(async () => {
+export const getIsSuperAdmin = cache(async () => {
   const user = await requireUser();
   const supabase = await createClient();
   const { data, error } = await supabase
@@ -74,7 +74,16 @@ export const requireSuperAdmin = cache(async () => {
     .eq("id", user.id)
     .single();
 
-  if (error || !data?.is_super_admin) {
+  if (error) {
+    throw new Error("Unable to verify platform access.", { cause: error });
+  }
+
+  return data?.is_super_admin === true;
+});
+
+export const requireSuperAdmin = cache(async () => {
+  const user = await requireUser();
+  if (!(await getIsSuperAdmin())) {
     redirect("/dashboard");
   }
 
