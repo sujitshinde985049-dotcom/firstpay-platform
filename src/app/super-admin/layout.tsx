@@ -22,6 +22,12 @@ const items = [
   { href: "/super-admin/analytics", label: "Analytics" },
   { href: "/super-admin/system-health", label: "System health" },
   { href: "/super-admin/integrations", label: "Integrations" },
+  { href: "/super-admin/providers", label: "Payment providers" },
+  { href: "/super-admin/provider-routing", label: "Provider routing" },
+  { href: "/super-admin/provider-health", label: "Provider health" },
+  { href: "/super-admin/provider-errors", label: "Provider errors" },
+  { href: "/super-admin/merchant-onboarding", label: "Merchant onboarding" },
+  { href: "/super-admin/reconciliation", label: "Reconciliation" },
   { href: "/super-admin/search", label: "Global search" },
   { href: "/super-admin/settings", label: "Settings" },
 ];

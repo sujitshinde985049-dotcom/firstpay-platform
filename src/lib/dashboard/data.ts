@@ -86,6 +86,19 @@ export async function getDashboardData() {
         .order("created_at", { ascending: false })
         .limit(6),
     ]);
+  const failedQuery = [
+    customers,
+    mandates,
+    payments,
+    settlements,
+    activity,
+    api,
+    webhooks,
+  ].find((result) => result.error);
+  if (failedQuery?.error)
+    throw new Error("Unable to load dashboard data.", {
+      cause: failedQuery.error,
+    });
   const pays = payments.data ?? [];
   const successful = pays.filter((p) => p.status === "success");
   const failed = pays.filter((p) => p.status === "failed");
@@ -105,14 +118,24 @@ export async function getDashboardData() {
         .filter((p) => p.status === "pending")
         .reduce((s, p) => s + Number(p.amount), 0),
     },
-    charts: Array.from({ length: 6 }, (_, i) => ({
-      label: new Date(2026, i + 1, 1).toLocaleDateString("en-IN", {
-        month: "short",
-      }),
-      value: pays
-        .filter((p) => new Date(p.created_at).getMonth() === i + 1)
-        .reduce((s, p) => s + Number(p.amount), 0),
-    })),
+    charts: Array.from({ length: 6 }, (_, index) => {
+      const month = new Date();
+      month.setDate(1);
+      month.setHours(0, 0, 0, 0);
+      month.setMonth(month.getMonth() - (5 - index));
+      return {
+        label: month.toLocaleDateString("en-IN", { month: "short" }),
+        value: pays
+          .filter((payment) => {
+            const createdAt = new Date(payment.created_at);
+            return (
+              createdAt.getFullYear() === month.getFullYear() &&
+              createdAt.getMonth() === month.getMonth()
+            );
+          })
+          .reduce((sum, payment) => sum + Number(payment.amount), 0),
+      };
+    }),
     activity: activity.data ?? [],
     api: api.data ?? [],
     webhooks: webhooks.data ?? [],

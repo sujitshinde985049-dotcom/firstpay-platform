@@ -18,5 +18,16 @@ export async function requireUser() {
     redirect("/login");
   }
 
+  const supabase = await createClient();
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("deactivated_at,deleted_at")
+    .eq("id", user.id)
+    .maybeSingle();
+  if (profile?.deactivated_at || profile?.deleted_at) {
+    await supabase.auth.signOut();
+    redirect("/login?reason=account_unavailable");
+  }
+
   return user;
 }

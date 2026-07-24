@@ -8,6 +8,7 @@ export type CurrentOrganisation = {
   id: string;
   name: string;
   slug: string;
+  status: string;
 };
 
 export const getCurrentOrganisation = cache(
@@ -21,7 +22,7 @@ export const getCurrentOrganisation = cache(
 
     let query = supabase
       .from("organisation_members")
-      .select("organisation:organisations(id, name, slug)")
+      .select("organisation:organisations(id, name, slug, status)")
       .eq("user_id", user.id)
       .eq("status", "active")
       .limit(1);
@@ -49,6 +50,7 @@ export async function requireOrganisation() {
   if (!organisation) {
     redirect("/dashboard/no-organisation");
   }
+  if (organisation.status === "suspended") redirect("/dashboard/suspended");
 
   return organisation;
 }

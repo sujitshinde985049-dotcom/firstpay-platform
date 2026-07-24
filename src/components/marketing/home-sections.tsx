@@ -76,16 +76,16 @@ export function TrustBand() {
     <section className="bg-surface border-y py-9">
       <div className="mx-auto max-w-7xl px-5 sm:px-6 lg:px-8">
         <p className="text-muted text-center text-xs font-bold tracking-[0.2em] uppercase">
-          Infrastructure trusted by modern finance teams
+          Illustrative ecosystem — verified customer logos pending
         </p>
         <div className="mt-7 grid grid-cols-2 gap-3 text-center sm:grid-cols-3 lg:grid-cols-6">
           {[
-            "ALTURA",
-            "NORTHSTAR",
-            "MERIDIAN",
-            "ASTER",
-            "VANTAGE",
-            "ORBITAL",
+            "CLIENT LOGO 1",
+            "CLIENT LOGO 2",
+            "CLIENT LOGO 3",
+            "PARTNER LOGO 1",
+            "PARTNER LOGO 2",
+            "PARTNER LOGO 3",
           ].map((name) => (
             <div
               key={name}
@@ -105,10 +105,10 @@ export function Stats() {
     <section className="bg-ink py-14 text-white">
       <div className="mx-auto grid max-w-7xl grid-cols-2 gap-8 px-5 sm:px-6 lg:grid-cols-4 lg:px-8">
         {[
-          ["99.99%", "Platform availability target"],
-          ["98.7%", "Payment success intelligence"],
-          ["< 120ms", "Median API response target"],
-          ["24×7", "Operations visibility"],
+          ["Sandbox", "Provider integrations remain in verification"],
+          ["Tenant RLS", "Organisation isolation architecture"],
+          ["No live mode", "Production processing explicitly blocked"],
+          ["Audit trail", "Privileged operations are attributable"],
         ].map(([value, label]) => (
           <Reveal key={label}>
             <p className="text-3xl font-bold sm:text-4xl">{value}</p>
@@ -304,9 +304,9 @@ export function SecurityTestimonialsFaq() {
       <section className="bg-surface-muted py-20 sm:py-28">
         <div className="mx-auto max-w-7xl px-5 sm:px-6 lg:px-8">
           <SectionHeading
-            eyebrow="Customer outcomes"
-            title="Built for teams that cannot compromise"
-            description="A payment operating layer designed for reliability, visibility, and confident scale."
+            eyebrow="Illustrative workflows"
+            title="Example outcomes — customer verification pending"
+            description="These scenarios are placeholders and are not customer endorsements."
           />
           <div className="mt-12 grid gap-5 lg:grid-cols-3">
             {[

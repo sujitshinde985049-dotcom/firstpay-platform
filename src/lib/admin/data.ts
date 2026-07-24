@@ -55,6 +55,21 @@ export async function getAdminDashboardData() {
       supabase.from("subscription_plans").select("id,name").order("sort_order"),
     ]);
 
+  const failedQuery = [
+    clients,
+    users,
+    leads,
+    tickets,
+    audit,
+    apiUsage,
+    storageUsage,
+    plans,
+  ].find((result) => result.error);
+  if (failedQuery?.error)
+    throw new Error("Unable to load the administration dashboard.", {
+      cause: failedQuery.error,
+    });
+
   const clientRows = clients.data ?? [];
   const userRows = users.data ?? [];
   const now = Date.now();

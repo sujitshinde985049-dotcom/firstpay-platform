@@ -1,5 +1,6 @@
 import { KeyRound } from "lucide-react";
 import { PageHeader } from "@/components/admin/page-header";
+import { SubmitButton } from "@/components/admin/submit-button";
 import { setRolePermissionAction } from "@/lib/admin/actions";
 import { createClient } from "@/lib/supabase/server";
 
@@ -114,12 +115,13 @@ export default async function PermissionsPage({
                             name="enabled"
                             value={enabled ? "false" : "true"}
                           />
-                          <button
+                          <SubmitButton
+                            pending="Saving…"
                             aria-label={`${enabled ? "Remove" : "Assign"} ${permission.code} for ${role.name}`}
-                            className={`rounded-full px-3 py-1 text-xs font-semibold ${enabled ? "bg-emerald-100 text-emerald-700" : "bg-slate-100 text-slate-500 dark:bg-slate-800"}`}
+                            className={`rounded-full px-3 py-1 text-xs font-semibold disabled:opacity-50 ${enabled ? "bg-emerald-100 text-emerald-700" : "bg-slate-100 text-slate-500 dark:bg-slate-800"}`}
                           >
                             {enabled ? "Allowed" : "Denied"}
-                          </button>
+                          </SubmitButton>
                         </form>
                       </td>
                     );

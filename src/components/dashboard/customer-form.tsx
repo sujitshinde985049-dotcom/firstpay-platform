@@ -2,6 +2,7 @@ import {
   deleteCustomerAction,
   saveCustomerAction,
 } from "@/lib/dashboard/actions";
+import { SubmitButton } from "@/components/admin/submit-button";
 type Customer = {
   id: string;
   company: string;
@@ -88,17 +89,20 @@ export function CustomerForm({ customer }: { customer?: Customer }) {
           />
         </label>
         <div className="flex gap-3 md:col-span-2">
-          <button className="rounded-lg bg-blue-700 px-5 py-2.5 text-sm font-semibold text-white">
+          <SubmitButton pending="Saving customer…">
             {customer ? "Save changes" : "Create customer"}
-          </button>
+          </SubmitButton>
         </div>
       </form>
       {customer ? (
         <form action={deleteCustomerAction} className="mt-4">
           <input type="hidden" name="id" value={customer.id} />
-          <button className="text-sm font-semibold text-red-700">
+          <SubmitButton
+            pending="Deleting…"
+            className="text-sm font-semibold text-red-700 disabled:opacity-50"
+          >
             Soft delete customer
-          </button>
+          </SubmitButton>
         </form>
       ) : null}
     </div>

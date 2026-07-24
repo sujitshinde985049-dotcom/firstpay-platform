@@ -1,0 +1,14 @@
+name: Feature request
+description: Propose a reviewed product enhancement.
+body:
+  - type: textarea
+    id: problem
+    attributes: { label: Problem }
+    validations: { required: true }
+  - type: textarea
+    id: proposal
+    attributes: { label: Proposed outcome }
+    validations: { required: true }
+  - type: textarea
+    id: security
+    attributes: { label: Security, privacy, and tenant considerations }

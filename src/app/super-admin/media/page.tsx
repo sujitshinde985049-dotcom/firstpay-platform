@@ -140,9 +140,12 @@ export default async function MediaPage() {
                       defaultValue={asset.name}
                       className="min-w-0 flex-1 rounded-lg border bg-slate-50 px-2 py-1.5 text-xs dark:bg-slate-900"
                     />
-                    <button className="text-xs font-semibold text-blue-700">
+                    <SubmitButton
+                      pending="Renaming…"
+                      className="text-xs font-semibold text-blue-700 disabled:opacity-50"
+                    >
                       Rename
-                    </button>
+                    </SubmitButton>
                   </form>
                   <form action={deleteMediaAction} className="mt-3">
                     <input type="hidden" name="id" value={asset.id} />
@@ -151,9 +154,12 @@ export default async function MediaPage() {
                       name="path"
                       value={asset.storage_path}
                     />
-                    <button className="text-xs font-semibold text-red-600">
+                    <SubmitButton
+                      pending="Deleting…"
+                      className="text-xs font-semibold text-red-600 disabled:opacity-50"
+                    >
                       Delete media
-                    </button>
+                    </SubmitButton>
                   </form>
                 </div>
               </article>

@@ -7,6 +7,7 @@ import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { FormField } from "@/components/ui/form-field";
+import { safeInternalRedirect } from "@/lib/auth/safe-redirect";
 import { createClient } from "@/lib/supabase/client";
 
 const schema = z.object({
@@ -38,10 +39,7 @@ export function LoginForm() {
       return;
     }
 
-    const next = searchParams.get("next");
-    const safeNext =
-      next?.startsWith("/") && !next.startsWith("//") ? next : "/dashboard";
-    router.replace(safeNext);
+    router.replace(safeInternalRedirect(searchParams.get("next")));
     router.refresh();
   });
 
@@ -64,7 +62,9 @@ export function LoginForm() {
         {...register("password")}
       />
       {serverError ? (
-        <p className="text-sm text-red-600">{serverError}</p>
+        <p role="alert" className="text-sm text-red-600">
+          {serverError}
+        </p>
       ) : null}
       <button
         type="submit"

@@ -144,6 +144,9 @@ export function Header() {
               Talk to sales
             </Link>
           </div>
+          <div className="mt-4 flex justify-end">
+            <ThemeToggle />
+          </div>
         </nav>
       ) : null}
     </header>
