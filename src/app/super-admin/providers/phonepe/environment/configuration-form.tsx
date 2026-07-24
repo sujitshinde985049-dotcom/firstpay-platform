@@ -6,6 +6,7 @@ import {
   savePhonePeConfiguration,
   type PhonePeConfigurationState,
 } from "./actions";
+import { missingWebhookConfigurationMessage } from "./webhook-policy";
 
 type Configuration = {
   environment: "sandbox" | "production";
@@ -31,16 +32,6 @@ export function PhonePeConfigurationForm({
   );
   return (
     <form action={action} className="space-y-6">
-      <input
-        type="hidden"
-        name="has_client_secret"
-        value={String(configuration.hasClientSecret)}
-      />
-      <input
-        type="hidden"
-        name="has_webhook_secret"
-        value={String(configuration.hasWebhookSecret)}
-      />
       {state.message ? (
         <div
           role={state.status === "error" ? "alert" : "status"}
@@ -117,6 +108,11 @@ export function PhonePeConfigurationForm({
             error={state.errors?.webhookSecret?.[0]}
             autoComplete="new-password"
           />
+          {!configuration.hasWebhookSecret ? (
+            <p className="rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm leading-6 text-amber-900 md:col-span-2 dark:bg-amber-950/30 dark:text-amber-100">
+              {missingWebhookConfigurationMessage}
+            </p>
+          ) : null}
         </div>
       </section>
       <section className="rounded-2xl border bg-white p-6 dark:bg-slate-950">

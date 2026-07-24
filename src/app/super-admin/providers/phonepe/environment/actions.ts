@@ -6,6 +6,7 @@ import { recordAuditEvent } from "@/lib/admin/audit";
 import { requireSuperAdmin } from "@/lib/auth/permissions";
 import { encryptProviderSecret } from "@/lib/security/provider-secrets";
 import { createClient } from "@/lib/supabase/server";
+import { resolvePhonePeWebhookSecret } from "./webhook-policy";
 
 const settingKey = "provider.phonepe";
 
@@ -22,8 +23,6 @@ const formSchema = z.object({
   oauthUrl: z.url("Enter a valid HTTPS OAuth URL."),
   subscriptionUrl: z.url("Enter a valid HTTPS Subscription URL."),
   webhookSecret: z.string().max(4096),
-  hasClientSecret: z.boolean(),
-  hasWebhookSecret: z.boolean(),
 });
 
 export type PhonePeConfigurationState = {
@@ -49,8 +48,6 @@ export async function savePhonePeConfiguration(
     oauthUrl: text(formData, "oauth_url"),
     subscriptionUrl: text(formData, "subscription_url"),
     webhookSecret: text(formData, "webhook_secret"),
-    hasClientSecret: text(formData, "has_client_secret") === "true",
-    hasWebhookSecret: text(formData, "has_webhook_secret") === "true",
   });
   if (!parsed.success)
     return {
@@ -60,18 +57,6 @@ export async function savePhonePeConfiguration(
     };
 
   const values = parsed.data;
-  if (!values.clientSecret && !values.hasClientSecret)
-    return {
-      status: "error",
-      message: "Client Secret is required.",
-      errors: { clientSecret: ["Client Secret is required."] },
-    };
-  if (!values.webhookSecret && !values.hasWebhookSecret)
-    return {
-      status: "error",
-      message: "Webhook Secret is required.",
-      errors: { webhookSecret: ["Webhook Secret is required."] },
-    };
   if (
     new URL(values.oauthUrl).protocol !== "https:" ||
     new URL(values.subscriptionUrl).protocol !== "https:"
@@ -100,16 +85,23 @@ export async function savePhonePeConfiguration(
   const clientSecretEncrypted = values.clientSecret
     ? encryptProviderSecret(values.clientSecret)
     : current.client_secret_encrypted;
-  const webhookSecretEncrypted = values.webhookSecret
-    ? encryptProviderSecret(values.webhookSecret)
-    : current.webhook_secret_encrypted;
-  if (
-    typeof clientSecretEncrypted !== "string" ||
-    typeof webhookSecretEncrypted !== "string"
-  )
+  if (typeof clientSecretEncrypted !== "string")
     return {
       status: "error",
-      message: "Both provider secrets must be supplied.",
+      message: "Client Secret is required.",
+      errors: { clientSecret: ["Client Secret is required."] },
+    };
+  const webhookDecision = resolvePhonePeWebhookSecret({
+    environment: values.environment,
+    submittedSecret: values.webhookSecret,
+    existingEncryptedSecret: current.webhook_secret_encrypted,
+    encrypt: encryptProviderSecret,
+  });
+  if (!webhookDecision.ok)
+    return {
+      status: "error",
+      message: webhookDecision.message,
+      errors: { webhookSecret: [webhookDecision.message] },
     };
 
   const { error } = await supabase.from("platform_settings").upsert(
@@ -124,7 +116,12 @@ export async function savePhonePeConfiguration(
         merchant_id: values.merchantId,
         oauth_url: values.oauthUrl,
         subscription_url: values.subscriptionUrl,
-        webhook_secret_encrypted: webhookSecretEncrypted,
+        ...(webhookDecision.encryptedSecret
+          ? {
+              webhook_secret_encrypted: webhookDecision.encryptedSecret,
+            }
+          : {}),
+        webhook_verification_configured: webhookDecision.configured,
         updated_at: new Date().toISOString(),
       },
     },
