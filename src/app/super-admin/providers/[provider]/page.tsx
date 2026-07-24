@@ -23,6 +23,10 @@ export default async function Page({
         {
           title: "Environment",
           body: "Sandbox and production credentials, references, records, and webhook secrets remain strictly separated.",
+          href:
+            provider === "phonepe"
+              ? "/super-admin/providers/phonepe/environment"
+              : undefined,
         },
         {
           title: "Capabilities",

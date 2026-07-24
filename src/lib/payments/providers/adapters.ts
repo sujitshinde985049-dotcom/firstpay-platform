@@ -1,5 +1,6 @@
 import { PlaceholderAdapter } from "./base-placeholder-adapter";
 import { providerConfig } from "./config";
+import { PhonePeAdapter } from "./phonepe-adapter";
 import type {
   PaymentProvider,
   ProviderCapability,
@@ -28,7 +29,6 @@ const documented: Partial<Record<PaymentProvider, ProviderCapability[]>> = {
     "webhook",
     "sandbox",
   ],
-  phonepe: ["one_time_payment", "refund", "webhook", "sandbox"],
   "jio-pg": [],
   sabpaisa: [],
 };
@@ -51,7 +51,7 @@ export const createProviderAdapters = (
   env: Record<string, string | undefined> = process.env,
 ) => [
   new ConfiguredPlaceholderAdapter("razorpay", "RAZORPAY", environment, env),
-  new ConfiguredPlaceholderAdapter("phonepe", "PHONEPE", environment, env),
+  new PhonePeAdapter(environment, env),
   new ConfiguredPlaceholderAdapter("cashfree", "CASHFREE", environment, env),
   new ConfiguredPlaceholderAdapter("jio-pg", "JIO_PG", environment, env),
   new ConfiguredPlaceholderAdapter("sabpaisa", "SABPAISA", environment, env),

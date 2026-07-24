@@ -18,6 +18,12 @@ const serverSchema = z.object({
   SMTP_HOST: z.string().optional(),
   SMTP_PORT: z.coerce.number().int().positive().optional(),
   PAYMENT_CREDENTIAL_ENCRYPTION_KEY: z.string().min(32).optional(),
+  PHONEPE_ENV: z.enum(["UAT", "PRODUCTION", "uat", "production"]).optional(),
+  PHONEPE_CLIENT_ID: z.string().min(1).optional(),
+  PHONEPE_CLIENT_SECRET: z.string().min(1).optional(),
+  PHONEPE_CLIENT_VERSION: z.string().min(1).optional(),
+  PHONEPE_TEST_MID: z.string().min(1).optional(),
+  PHONEPE_BASE_URL: optionalUrl,
 });
 export type PublicEnvironment = z.infer<typeof publicSchema>;
 export type ServerEnvironment = z.infer<typeof serverSchema>;
@@ -54,9 +60,15 @@ export const optionalProviderEnvironment = (
     configured: Boolean(source.RAZORPAY_KEY_ID && source.RAZORPAY_KEY_SECRET),
   },
   phonepe: {
+    environment: source.PHONEPE_ENV,
     baseUrl: source.PHONEPE_BASE_URL,
     configured: Boolean(
-      source.PHONEPE_CLIENT_ID && source.PHONEPE_CLIENT_SECRET,
+      source.PHONEPE_ENV &&
+      source.PHONEPE_CLIENT_ID &&
+      source.PHONEPE_CLIENT_SECRET &&
+      source.PHONEPE_CLIENT_VERSION &&
+      source.PHONEPE_TEST_MID &&
+      source.PHONEPE_BASE_URL,
     ),
   },
   cashfree: {
