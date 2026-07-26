@@ -3,6 +3,7 @@ import { hasPermission } from "@/lib/auth/permissions";
 import { getRows } from "@/lib/dashboard/data";
 import { canCreateMandate } from "@/lib/features/rules";
 import { getOrganisationFeatures } from "@/lib/features/server";
+import { mandateRoutes } from "@/lib/mandates/routes";
 import { requireOrganisation } from "@/lib/organisations/current";
 
 export default async function Page() {
@@ -25,6 +26,7 @@ export default async function Page() {
       rows={rows}
       valueLabel="Amount"
       createLabel={showCreateMandate ? "Create mandate" : undefined}
+      createHref={showCreateMandate ? mandateRoutes.create : undefined}
     />
   );
 }

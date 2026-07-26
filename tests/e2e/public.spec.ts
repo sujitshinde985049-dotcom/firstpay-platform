@@ -25,6 +25,10 @@ test("unauthenticated dashboard redirects", async ({ page }) => {
   await page.goto("/dashboard");
   await expect(page).toHaveURL(/\/login/);
 });
+test("mandate creation route is protected", async ({ page }) => {
+  await page.goto("/dashboard/mandates/new");
+  await expect(page).toHaveURL(/\/login/);
+});
 test("invalid Razorpay webhook signature is rejected", async ({ request }) => {
   const response = await request.post("/api/webhooks/razorpay", {
     data: { event: "test" },
