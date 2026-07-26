@@ -15,7 +15,7 @@ export function Sidebar({ title, items }: SidebarProps) {
         <span className="ml-2 text-xs text-slate-500">{title}</span>
       </div>
       <nav
-        className="flex gap-2 overflow-x-auto p-4 lg:block lg:space-y-1"
+        className="flex gap-2 overflow-x-auto p-4 lg:block lg:max-h-[calc(100vh-4rem)] lg:space-y-1 lg:overflow-y-auto"
         aria-label="Primary navigation"
       >
         {items.map((item) => (
