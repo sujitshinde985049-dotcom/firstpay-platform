@@ -1,26 +1,52 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
+import { headers } from "next/headers";
 import { notFound } from "next/navigation";
 import { PageHeader } from "@/components/admin/page-header";
 import { StatusBadge } from "@/components/admin/status-badge";
 import { PendingMandateAction } from "@/components/dashboard/pending-mandate-action";
 import { hasPermission } from "@/lib/auth/permissions";
-import { canViewMandateDetails } from "@/lib/mandates/details";
+import {
+  canViewMandateDetails,
+  formatOptionalAmount,
+  formatOptionalDate,
+  mandateDetailsSelect,
+  optionalText,
+  unavailable,
+} from "@/lib/mandates/details";
+import { correlationId, logServerEvent } from "@/lib/observability/logger";
 import { requireOrganisation } from "@/lib/organisations/current";
 import { createClient } from "@/lib/supabase/server";
 
 type ProviderAttempt = {
+  provider_id: string;
   provider_reference: string | null;
   status: string;
   safe_failure_message: string | null;
-  created_at: string;
-  provider: { key: string; name: string } | null;
 };
 
-const formatDate = (value: string) =>
-  new Intl.DateTimeFormat("en-IN", {
-    dateStyle: "medium",
-    timeStyle: "short",
-  }).format(new Date(value));
+type Provider = {
+  key: string;
+  name: string;
+};
+
+function databaseErrorCode(error: unknown) {
+  if (!error || typeof error !== "object") return "unknown";
+  const code = (error as { code?: unknown }).code;
+  return typeof code === "string" ? code : "unknown";
+}
+
+function logLoadIssue(
+  level: "warn" | "error",
+  supportReference: string,
+  stage: string,
+  error: unknown,
+) {
+  logServerEvent(level, "mandate_details.load_failed", {
+    supportReference,
+    stage,
+    databaseErrorCode: databaseErrorCode(error),
+  });
+}
 
 export default async function Page({
   params,
@@ -32,17 +58,23 @@ export default async function Page({
   const canView = await hasPermission(organisation.id, "mandates.view");
   if (!canView) notFound();
 
+  const requestHeaders = await headers();
+  const supportReference = correlationId(
+    requestHeaders.get("x-vercel-id") ?? requestHeaders.get("x-request-id"),
+  );
   const typedClient = await createClient();
   const { data: mandate, error } = await typedClient
     .from("mandates")
-    .select(
-      "id,organisation_id,reference,type,amount,frequency,status,metadata,created_at,updated_at,customer:customers(company,contact_name)",
-    )
+    .select(mandateDetailsSelect)
     .eq("id", mandateId)
     .eq("organisation_id", organisation.id)
     .maybeSingle();
   if (error) {
-    throw new Error("Unable to load mandate details.", { cause: error });
+    logLoadIssue("error", supportReference, "mandate", error);
+    throw Object.assign(new Error("Unable to load mandate details."), {
+      cause: error,
+      digest: supportReference,
+    });
   }
   if (
     !mandate ||
@@ -55,57 +87,74 @@ export default async function Page({
     notFound();
   }
 
+  const { data: customer, error: customerError } = await typedClient
+    .from("customers")
+    .select("company,contact_name")
+    .eq("id", mandate.customer_id)
+    .eq("organisation_id", organisation.id)
+    .is("deleted_at", null)
+    .maybeSingle();
+  if (customerError) {
+    logLoadIssue("warn", supportReference, "customer", customerError);
+  }
+
   const orchestrationClient = typedClient as unknown as SupabaseClient;
   const { data: attemptData, error: attemptError } = await orchestrationClient
     .from("mandate_attempts")
-    .select(
-      "provider_reference,status,safe_failure_message,created_at,provider:payment_providers(key,name)",
-    )
+    .select("provider_id,provider_reference,status,safe_failure_message")
     .eq("mandate_id", mandate.id)
     .eq("organisation_id", organisation.id)
     .order("attempt_number", { ascending: false })
     .limit(1)
     .maybeSingle();
   if (attemptError) {
-    throw new Error("Unable to load mandate provider status.", {
-      cause: attemptError,
-    });
+    logLoadIssue("warn", supportReference, "provider_attempt", attemptError);
   }
 
-  const attempt = attemptData as ProviderAttempt | null;
-  const customer = Array.isArray(mandate.customer)
-    ? mandate.customer[0]
-    : mandate.customer;
-  const providerKey = attempt?.provider?.key ?? null;
+  const attempt = attemptError ? null : (attemptData as ProviderAttempt | null);
+  let provider: Provider | null = null;
+  if (attempt?.provider_id) {
+    const { data: providerData, error: providerError } =
+      await orchestrationClient
+        .from("payment_providers")
+        .select("key,name")
+        .eq("id", attempt.provider_id)
+        .maybeSingle();
+    if (providerError) {
+      logLoadIssue("warn", supportReference, "provider", providerError);
+    } else {
+      provider = providerData as Provider | null;
+    }
+  }
+
+  const providerKey = provider?.key ?? null;
   const fields = [
-    ["Customer", customer?.company ?? customer?.contact_name ?? "—"],
-    ["Provider", attempt?.provider?.name ?? "Not assigned"],
-    ["Mandate type", mandate.type === "upi_autopay" ? "UPI AutoPay" : "e-NACH"],
+    ["Customer", optionalText(customer?.company ?? customer?.contact_name)],
+    ["Provider", optionalText(provider?.name)],
     [
-      "Amount",
-      new Intl.NumberFormat("en-IN", {
-        style: "currency",
-        currency: "INR",
-      }).format(Number(mandate.amount)),
+      "Mandate type",
+      mandate.type === "upi_autopay"
+        ? "UPI AutoPay"
+        : mandate.type === "e_nach"
+          ? "e-NACH"
+          : unavailable,
     ],
-    ["Frequency", mandate.frequency],
-    ["Created", formatDate(mandate.created_at)],
-    ["Updated", formatDate(mandate.updated_at)],
+    ["Amount", formatOptionalAmount(mandate.amount)],
+    ["Frequency", optionalText(mandate.frequency)],
+    ["Created", formatOptionalDate(mandate.created_at)],
+    ["Updated", formatOptionalDate(mandate.updated_at)],
     [
       "Provider transaction / subscription reference",
-      attempt?.provider_reference ?? "—",
+      optionalText(attempt?.provider_reference),
     ],
-    [
-      "Sanitized provider status",
-      attempt?.status ?? "No provider request recorded",
-    ],
-    ["Sanitized provider error", attempt?.safe_failure_message ?? "—"],
+    ["Sanitized provider status", optionalText(attempt?.status)],
+    ["Sanitized provider error", optionalText(attempt?.safe_failure_message)],
   ];
 
   return (
     <div>
       <PageHeader
-        title={mandate.reference}
+        title={optionalText(mandate.reference)}
         description="Tenant-scoped mandate and provider status details."
         actions={<StatusBadge value={mandate.status} />}
       />

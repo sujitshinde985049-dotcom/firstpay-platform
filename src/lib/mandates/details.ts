@@ -4,12 +4,47 @@ export type MandateDetailsAccess = {
   mandateOrganisationId: string;
 };
 
+export const unavailable = "Not available";
+export const mandateDetailsSelect =
+  "id,organisation_id,customer_id,reference,type,amount,frequency,status,metadata,created_at,updated_at";
+
 export function canViewMandateDetails({
   hasViewPermission,
   currentOrganisationId,
   mandateOrganisationId,
 }: MandateDetailsAccess) {
   return hasViewPermission && currentOrganisationId === mandateOrganisationId;
+}
+
+export function formatOptionalDate(value: string | null | undefined) {
+  if (!value) return unavailable;
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return unavailable;
+
+  return new Intl.DateTimeFormat("en-IN", {
+    dateStyle: "medium",
+    timeStyle: "short",
+  }).format(date);
+}
+
+export function formatOptionalAmount(value: number | null | undefined) {
+  if (
+    value === null ||
+    value === undefined ||
+    !Number.isFinite(Number(value))
+  ) {
+    return unavailable;
+  }
+
+  return new Intl.NumberFormat("en-IN", {
+    style: "currency",
+    currency: "INR",
+  }).format(Number(value));
+}
+
+export function optionalText(value: string | null | undefined) {
+  const text = value?.trim();
+  return text || unavailable;
 }
 
 export function getPhonePeAuthorizationUrl(metadata: unknown) {
