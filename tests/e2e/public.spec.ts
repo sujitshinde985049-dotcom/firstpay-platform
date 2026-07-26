@@ -29,6 +29,10 @@ test("mandate creation route is protected", async ({ page }) => {
   await page.goto("/dashboard/mandates/new");
   await expect(page).toHaveURL(/\/login/);
 });
+test("direct mandate details route is protected", async ({ page }) => {
+  await page.goto("/dashboard/mandates/00000000-0000-4000-8000-000000000000");
+  await expect(page).toHaveURL(/\/login/);
+});
 test("invalid Razorpay webhook signature is rejected", async ({ request }) => {
   const response = await request.post("/api/webhooks/razorpay", {
     data: { event: "test" },

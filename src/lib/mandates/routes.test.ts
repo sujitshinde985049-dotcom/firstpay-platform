@@ -5,4 +5,10 @@ describe("mandate routes", () => {
   it("links the Create Mandate action to the protected creation page", () => {
     expect(mandateRoutes.create).toBe("/dashboard/mandates/new");
   });
+
+  it("builds the direct mandate details route", () => {
+    expect(mandateRoutes.details("mandate-id")).toBe(
+      "/dashboard/mandates/mandate-id",
+    );
+  });
 });

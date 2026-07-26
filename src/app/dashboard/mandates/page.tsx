@@ -23,7 +23,10 @@ export default async function Page() {
     <ModulePage
       title="Mandates"
       description="Monitor UPI AutoPay and e-NACH mandates, frequency, amount, and history."
-      rows={rows}
+      rows={rows.map((row) => ({
+        ...row,
+        href: mandateRoutes.details(row.id),
+      }))}
       valueLabel="Amount"
       createLabel={showCreateMandate ? "Create mandate" : undefined}
       createHref={showCreateMandate ? mandateRoutes.create : undefined}

@@ -1,7 +1,7 @@
 import { Download, Plus, Search } from "lucide-react";
 import Link from "next/link";
 import { PageHeader } from "@/components/admin/page-header";
-import { StatusBadge } from "@/components/admin/status-badge";
+import { ModuleTableRow } from "./module-table-row";
 
 export type ModuleRow = {
   id: string;
@@ -10,6 +10,7 @@ export type ModuleRow = {
   status: string;
   value: string;
   date: string;
+  href?: string;
 };
 export function ModulePage({
   title,
@@ -98,19 +99,7 @@ export function ModulePage({
           </thead>
           <tbody className="divide-y">
             {rows.map((row) => (
-              <tr key={row.id}>
-                <td className="px-5 py-4">
-                  <strong className="block">{row.primary}</strong>
-                  <span className="text-xs text-slate-500">
-                    {row.secondary}
-                  </span>
-                </td>
-                <td className="px-5 py-4">
-                  <StatusBadge value={row.status} />
-                </td>
-                <td className="px-5 py-4 font-medium">{row.value}</td>
-                <td className="px-5 py-4 text-slate-500">{row.date}</td>
-              </tr>
+              <ModuleTableRow key={row.id} row={row} />
             ))}
           </tbody>
         </table>
