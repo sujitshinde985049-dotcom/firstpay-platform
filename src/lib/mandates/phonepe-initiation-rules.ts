@@ -24,7 +24,7 @@ function isRecord(value: unknown): value is Record<string, unknown> {
 
 export function buildPhonePeMandatePayload(
   mandate: PhonePeMandateInput,
-  appUrl: string,
+  callbackUrl: string,
 ) {
   const start = mandate.startsAt ? new Date(mandate.startsAt) : new Date();
   const end = mandate.endsAt
@@ -43,10 +43,7 @@ export function buildPhonePeMandatePayload(
     currency: "INR" as const,
     frequency: frequencyMap[mandate.frequency],
     duration,
-    callbackUrl: new URL(
-      `/dashboard/mandates/${mandate.id}`,
-      appUrl,
-    ).toString(),
+    callbackUrl,
   };
 }
 

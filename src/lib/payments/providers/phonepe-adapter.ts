@@ -108,6 +108,29 @@ const readJson = async (response: Response): Promise<unknown> => {
 const endpoint = (baseUrl: string, path: string) =>
   new URL(path, `${baseUrl.replace(/\/+$/, "")}/`).toString();
 
+export function resolvePhonePeEndpoint(
+  configuredUrl: string | undefined,
+  baseUrl: string | undefined,
+  path: string,
+) {
+  if (!configuredUrl) return endpoint(baseUrl!, path);
+
+  const url = new URL(configuredUrl);
+  const normalizedPath = url.pathname.replace(/^\/+|\/+$/g, "");
+  if (normalizedPath.endsWith(path)) return url.toString();
+
+  const finalSegment = normalizedPath.split("/").at(-1);
+  if (
+    configuredUrl.endsWith("/") ||
+    finalSegment === "pg-sandbox" ||
+    finalSegment === "pg"
+  ) {
+    return endpoint(configuredUrl, path);
+  }
+
+  return url.toString();
+}
+
 export class PhonePeAdapter implements PaymentProviderAdapter {
   readonly capabilities = new Set<ProviderCapability>([
     "upi_autopay",
@@ -165,22 +188,27 @@ export class PhonePeAdapter implements PaymentProviderAdapter {
     });
 
     const response = await this.fetcher(
-      this.settings.PHONEPE_OAUTH_URL ??
-        endpoint(this.settings.PHONEPE_BASE_URL!, oauthPath),
+      resolvePhonePeEndpoint(
+        this.settings.PHONEPE_OAUTH_URL,
+        this.settings.PHONEPE_BASE_URL,
+        oauthPath,
+      ),
       {
         method: "POST",
         headers: { "content-type": "application/x-www-form-urlencoded" },
         body,
       },
     );
-    const raw = await readJson(response);
     if (!response.ok) {
       logServerEvent("warn", "phonepe.oauth.failed", {
         environment: this.config.environment,
         statusCode: response.status,
       });
-      throw new Error("PhonePe authentication failed.");
+      throw new Error(
+        `PhonePe authentication failed (HTTP ${response.status}).`,
+      );
     }
+    const raw = await readJson(response);
 
     const parsed = oauthResponseSchema.safeParse(raw);
     if (!parsed.success)
@@ -246,8 +274,11 @@ export class PhonePeAdapter implements PaymentProviderAdapter {
       merchantSubscriptionId: payload.data.merchantSubscriptionId,
     });
     const response = await this.fetcher(
-      this.settings.PHONEPE_SUBSCRIPTION_URL ??
-        endpoint(this.settings.PHONEPE_BASE_URL!, subscriptionCreatePath),
+      resolvePhonePeEndpoint(
+        this.settings.PHONEPE_SUBSCRIPTION_URL,
+        this.settings.PHONEPE_BASE_URL,
+        subscriptionCreatePath,
+      ),
       {
         method: "POST",
         headers: {
@@ -263,15 +294,26 @@ export class PhonePeAdapter implements PaymentProviderAdapter {
         }),
       },
     );
+    if (!response.ok) {
+      logServerEvent("warn", "phonepe.subscription_create.failed", {
+        organisationId: request.organisationId,
+        environment: this.config.environment,
+        statusCode: response.status,
+      });
+      return {
+        ok: false,
+        provider: "phonepe",
+        status: "failed",
+        safeMessage: `PhonePe subscription creation failed (HTTP ${response.status}).`,
+      };
+    }
     const raw = await readJson(response);
     const parsed = subscriptionResponseSchema.safeParse(raw);
     if (!parsed.success)
       throw new Error("PhonePe returned an invalid subscription response.");
 
     const accepted =
-      response.ok &&
-      parsed.data.success !== false &&
-      parsed.data.code !== "FAILURE";
+      parsed.data.success !== false && parsed.data.code !== "FAILURE";
     const reference =
       parsed.data.data?.subscriptionId ??
       parsed.data.data?.merchantSubscriptionId ??

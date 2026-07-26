@@ -170,4 +170,56 @@ describe("PhonePeAdapter", () => {
       "https://api.phonepe.com/subscriptions/create",
     );
   });
+
+  it("expands a configured UAT base URL instead of posting to the base path", async () => {
+    const fetcher = vi
+      .fn<typeof fetch>()
+      .mockResolvedValueOnce(
+        jsonResponse({ access_token: "oauth-token", expires_in: 3600 }),
+      )
+      .mockResolvedValueOnce(
+        jsonResponse({
+          success: true,
+          data: { subscriptionId: "subscription-id" },
+        }),
+      );
+    const adapter = new PhonePeAdapter(
+      "sandbox",
+      {
+        ...environment,
+        PHONEPE_BASE_URL: undefined,
+        PHONEPE_OAUTH_URL: "https://api-preprod.phonepe.com/apis/pg-sandbox/",
+        PHONEPE_SUBSCRIPTION_URL:
+          "https://api-preprod.phonepe.com/apis/pg-sandbox/",
+      },
+      fetcher,
+    );
+
+    await adapter.createMandate(request);
+
+    expect(fetcher.mock.calls[0]![0]).toBe(
+      "https://api-preprod.phonepe.com/apis/pg-sandbox/v1/oauth/token",
+    );
+    expect(fetcher.mock.calls[1]![0]).toBe(
+      "https://api-preprod.phonepe.com/apis/pg-sandbox/v3/recurring/subscription/create",
+    );
+  });
+
+  it("surfaces a Subscription Create HTTP 404 safely", async () => {
+    const fetcher = vi
+      .fn<typeof fetch>()
+      .mockResolvedValueOnce(
+        jsonResponse({ access_token: "oauth-token", expires_in: 3600 }),
+      )
+      .mockResolvedValueOnce(new Response(null, { status: 404 }));
+    const adapter = new PhonePeAdapter("sandbox", environment, fetcher);
+
+    const result = await adapter.createMandate(request);
+
+    expect(result).toMatchObject({
+      ok: false,
+      status: "failed",
+      safeMessage: "PhonePe subscription creation failed (HTTP 404).",
+    });
+  });
 });

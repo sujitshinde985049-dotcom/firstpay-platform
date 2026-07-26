@@ -14,6 +14,7 @@ import {
   extractPhonePeAuthorizationUrl,
   type PhonePeMandateInput,
 } from "./phonepe-initiation-rules";
+import { phonePeReturnUrl } from "./phonepe-routes";
 
 type PhonePeStoredConfiguration = {
   environment: "sandbox" | "production";
@@ -47,6 +48,12 @@ function isStoredConfiguration(
 }
 
 function safeFailure(error: unknown) {
+  if (
+    error instanceof Error &&
+    /^PhonePe .+ failed \(HTTP \d{3}\)\.$/.test(error.message)
+  ) {
+    return error.message;
+  }
   return error instanceof ConfigurationError
     ? "PhonePe configuration is unavailable."
     : "PhonePe provider request could not be completed.";
@@ -144,20 +151,14 @@ export async function initiatePhonePeMandate(mandate: PhonePeMandateInput) {
       .update({ environment })
       .eq("id", request.id);
 
-    const appUrl = process.env.NEXT_PUBLIC_APP_URL;
-    if (!appUrl) {
-      throw new ConfigurationError(
-        "phonepe",
-        "Application URL is not configured.",
-      );
-    }
+    const callbackUrl = phonePeReturnUrl(process.env, mandate.id);
     const adapter = new PhonePeAdapter(environment, configuration.env);
     const response = await adapter.createMandate({
       organisationId: mandate.organisationId,
       idempotencyKey: key,
       environment,
       operation: "mandate.create",
-      payload: buildPhonePeMandatePayload(mandate, appUrl),
+      payload: buildPhonePeMandatePayload(mandate, callbackUrl),
     });
     const authorizationUrl = extractPhonePeAuthorizationUrl(response.data);
     await persistProviderResult({

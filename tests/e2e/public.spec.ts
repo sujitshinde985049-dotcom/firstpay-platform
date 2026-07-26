@@ -33,6 +33,14 @@ test("direct mandate details route is protected", async ({ page }) => {
   await page.goto("/dashboard/mandates/00000000-0000-4000-8000-000000000000");
   await expect(page).toHaveURL(/\/login/);
 });
+test("PhonePe public return route exists and continues to protected details", async ({
+  page,
+}) => {
+  await page.goto("/phonepe/return/00000000-0000-4000-8000-000000000000");
+  await expect(page).toHaveURL(
+    /\/login\?next=%2Fdashboard%2Fmandates%2F00000000-0000-4000-8000-000000000000/,
+  );
+});
 test("invalid Razorpay webhook signature is rejected", async ({ request }) => {
   const response = await request.post("/api/webhooks/razorpay", {
     data: { event: "test" },

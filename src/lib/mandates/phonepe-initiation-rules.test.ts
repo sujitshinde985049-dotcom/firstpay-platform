@@ -20,7 +20,10 @@ const mandate: PhonePeMandateInput = {
 describe("PhonePe mandate initiation rules", () => {
   it("builds the PhonePe subscription request in minor currency units", () => {
     expect(
-      buildPhonePeMandatePayload(mandate, "https://firstpay.example"),
+      buildPhonePeMandatePayload(
+        mandate,
+        `https://firstpay.example/phonepe/return/${mandate.id}`,
+      ),
     ).toMatchObject({
       merchantSubscriptionId: mandate.id,
       merchantUserId: mandate.customerId,
@@ -29,7 +32,7 @@ describe("PhonePe mandate initiation rules", () => {
       currency: "INR",
       frequency: "MONTHLY",
       duration: 365,
-      callbackUrl: `https://firstpay.example/dashboard/mandates/${mandate.id}`,
+      callbackUrl: `https://firstpay.example/phonepe/return/${mandate.id}`,
     });
   });
 
