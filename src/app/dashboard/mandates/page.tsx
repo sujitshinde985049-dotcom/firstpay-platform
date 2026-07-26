@@ -7,13 +7,13 @@ import { requireOrganisation } from "@/lib/organisations/current";
 
 export default async function Page() {
   const organisation = await requireOrganisation();
-  const [rows, canManageMandates, features] = await Promise.all([
+  const [rows, hasCreatePermission, features] = await Promise.all([
     getRows("mandates"),
-    hasPermission(organisation.id, "mandates.manage"),
+    hasPermission(organisation.id, "mandates.create"),
     getOrganisationFeatures(organisation.id, ["upi_autopay", "e_nach"]),
   ]);
   const showCreateMandate = canCreateMandate({
-    canManageMandates,
+    hasCreatePermission,
     upiAutoPayEnabled: features.upi_autopay,
     eNachEnabled: features.e_nach,
   });

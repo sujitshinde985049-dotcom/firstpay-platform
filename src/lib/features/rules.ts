@@ -37,13 +37,13 @@ export function isFeatureEnabled(
 }
 
 export function canCreateMandate({
-  canManageMandates,
+  hasCreatePermission,
   upiAutoPayEnabled,
   eNachEnabled,
 }: {
-  canManageMandates: boolean;
+  hasCreatePermission: boolean;
   upiAutoPayEnabled: boolean;
   eNachEnabled: boolean;
 }) {
-  return canManageMandates && (upiAutoPayEnabled || eNachEnabled);
+  return hasCreatePermission && (upiAutoPayEnabled || eNachEnabled);
 }

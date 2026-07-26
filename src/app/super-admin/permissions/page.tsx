@@ -2,6 +2,7 @@ import { KeyRound } from "lucide-react";
 import { PageHeader } from "@/components/admin/page-header";
 import { SubmitButton } from "@/components/admin/submit-button";
 import { setRolePermissionAction } from "@/lib/admin/actions";
+import { missingMandatePermissionCodes } from "@/lib/auth/permission-catalog";
 import { createClient } from "@/lib/supabase/server";
 
 export default async function PermissionsPage({
@@ -40,6 +41,9 @@ export default async function PermissionsPage({
       (grant) =>
         grant.role_id === roleId && grant.permission_id === permissionId,
     ) ?? false;
+  const missingMandatePermissions = missingMandatePermissionCodes(
+    permissions?.map((permission) => permission.code) ?? [],
+  );
   return (
     <div>
       <PageHeader
@@ -64,73 +68,89 @@ export default async function PermissionsPage({
         </button>
       </form>
       {organisationId ? (
-        <div className="overflow-x-auto rounded-2xl border bg-white dark:bg-slate-950">
-          <table className="w-full min-w-[900px] text-left text-sm">
-            <thead className="border-b bg-slate-50 text-xs text-slate-500 uppercase dark:bg-slate-900">
-              <tr>
-                <th className="sticky left-0 bg-slate-50 px-5 py-4 dark:bg-slate-900">
-                  Permission
-                </th>
-                {roles?.map((role) => (
-                  <th key={role.id} className="px-4 text-center">
-                    {role.name}
+        <>
+          {missingMandatePermissions.length ? (
+            <div
+              role="alert"
+              className="mb-4 rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900 dark:bg-amber-950/30 dark:text-amber-100"
+            >
+              Mandate permissions are not seeded for this client. Apply the
+              latest Supabase migrations to display and assign:{" "}
+              {missingMandatePermissions.join(", ")}.
+            </div>
+          ) : null}
+          <div className="overflow-x-auto rounded-2xl border bg-white dark:bg-slate-950">
+            <table className="w-full min-w-[900px] text-left text-sm">
+              <thead className="border-b bg-slate-50 text-xs text-slate-500 uppercase dark:bg-slate-900">
+                <tr>
+                  <th className="sticky left-0 bg-slate-50 px-5 py-4 dark:bg-slate-900">
+                    Permission
                   </th>
-                ))}
-              </tr>
-            </thead>
-            <tbody className="divide-y">
-              {permissions?.map((permission) => (
-                <tr key={permission.id}>
-                  <td className="sticky left-0 bg-white px-5 py-4 dark:bg-slate-950">
-                    <span className="flex items-start gap-3">
-                      <KeyRound className="mt-0.5 size-4 text-blue-700" />
-                      <span>
-                        <strong className="block font-medium">
-                          {permission.code}
-                        </strong>
-                        <small className="text-slate-500">
-                          {permission.description}
-                        </small>
-                      </span>
-                    </span>
-                  </td>
-                  {roles?.map((role) => {
-                    const enabled = hasGrant(role.id, permission.id);
-                    return (
-                      <td key={role.id} className="px-4 text-center">
-                        <form action={setRolePermissionAction}>
-                          <input
-                            type="hidden"
-                            name="organisation_id"
-                            value={organisationId}
-                          />
-                          <input type="hidden" name="role_id" value={role.id} />
-                          <input
-                            type="hidden"
-                            name="permission_id"
-                            value={permission.id}
-                          />
-                          <input
-                            type="hidden"
-                            name="enabled"
-                            value={enabled ? "false" : "true"}
-                          />
-                          <SubmitButton
-                            pending="Saving…"
-                            aria-label={`${enabled ? "Remove" : "Assign"} ${permission.code} for ${role.name}`}
-                            className={`rounded-full px-3 py-1 text-xs font-semibold disabled:opacity-50 ${enabled ? "bg-emerald-100 text-emerald-700" : "bg-slate-100 text-slate-500 dark:bg-slate-800"}`}
-                          >
-                            {enabled ? "Allowed" : "Denied"}
-                          </SubmitButton>
-                        </form>
-                      </td>
-                    );
-                  })}
+                  {roles?.map((role) => (
+                    <th key={role.id} className="px-4 text-center">
+                      {role.name}
+                    </th>
+                  ))}
                 </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+              </thead>
+              <tbody className="divide-y">
+                {permissions?.map((permission) => (
+                  <tr key={permission.id}>
+                    <td className="sticky left-0 bg-white px-5 py-4 dark:bg-slate-950">
+                      <span className="flex items-start gap-3">
+                        <KeyRound className="mt-0.5 size-4 text-blue-700" />
+                        <span>
+                          <strong className="block font-medium">
+                            {permission.code}
+                          </strong>
+                          <small className="text-slate-500">
+                            {permission.description}
+                          </small>
+                        </span>
+                      </span>
+                    </td>
+                    {roles?.map((role) => {
+                      const enabled = hasGrant(role.id, permission.id);
+                      return (
+                        <td key={role.id} className="px-4 text-center">
+                          <form action={setRolePermissionAction}>
+                            <input
+                              type="hidden"
+                              name="organisation_id"
+                              value={organisationId}
+                            />
+                            <input
+                              type="hidden"
+                              name="role_id"
+                              value={role.id}
+                            />
+                            <input
+                              type="hidden"
+                              name="permission_id"
+                              value={permission.id}
+                            />
+                            <input
+                              type="hidden"
+                              name="enabled"
+                              value={enabled ? "false" : "true"}
+                            />
+                            <SubmitButton
+                              pending="Saving…"
+                              aria-label={`${enabled ? "Remove" : "Assign"} ${permission.code} for ${role.name}`}
+                              className={`rounded-full px-3 py-1 text-xs font-semibold disabled:opacity-50 ${enabled ? "bg-emerald-100 text-emerald-700" : "bg-slate-100 text-slate-500 dark:bg-slate-800"}`}
+                            >
+                              {enabled ? "Allowed" : "Denied"}
+                            </SubmitButton>
+                          </form>
+                        </td>
+                      );
+                    })}
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </>
       ) : (
         <div className="rounded-2xl border border-dashed p-12 text-center text-sm text-slate-500">
           Select a client to manage its role permissions.

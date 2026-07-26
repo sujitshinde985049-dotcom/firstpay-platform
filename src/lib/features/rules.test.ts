@@ -34,7 +34,7 @@ describe("feature flag rules", () => {
   it("shows Create Mandate when UPI AutoPay and permission are enabled", () => {
     expect(
       canCreateMandate({
-        canManageMandates: true,
+        hasCreatePermission: true,
         upiAutoPayEnabled: true,
         eNachEnabled: false,
       }),
@@ -44,7 +44,7 @@ describe("feature flag rules", () => {
   it("keeps Create Mandate hidden without mandates.manage", () => {
     expect(
       canCreateMandate({
-        canManageMandates: false,
+        hasCreatePermission: false,
         upiAutoPayEnabled: true,
         eNachEnabled: true,
       }),
