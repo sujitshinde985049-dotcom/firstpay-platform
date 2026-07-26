@@ -59,7 +59,7 @@ describe("pending PhonePe mandate action", () => {
         },
       }),
     ).toEqual({
-      label: "Open PhonePe authorization",
+      label: "Continue to PhonePe",
       href: "https://mercury.phonepe.com/authorize/123",
     });
   });

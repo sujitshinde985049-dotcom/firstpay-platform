@@ -6,6 +6,8 @@ import { requireOrganisation } from "@/lib/organisations/current";
 import { createClient } from "@/lib/supabase/server";
 import { hasPermission } from "@/lib/auth/permissions";
 import { getOrganisationFeatures } from "@/lib/features/server";
+import { initiatePhonePeMandate } from "@/lib/mandates/phonepe-initiation";
+import { mandateRoutes } from "@/lib/mandates/routes";
 const customerSchema = z.object({
   id: z.string().uuid().optional(),
   company: z.string().min(2).max(160),
@@ -131,22 +133,47 @@ export async function createMandateAction(formData: FormData) {
   }
   if (!customer) throw new Error("The selected customer was not found.");
 
-  const { error } = await supabase.from("mandates").insert({
-    organisation_id: org.id,
-    customer_id: values.customer_id,
-    reference: values.reference,
-    type: values.type,
-    frequency: values.frequency,
-    amount: values.amount,
-    starts_at: values.starts_at
-      ? new Date(`${values.starts_at}T00:00:00.000Z`).toISOString()
-      : null,
-    ends_at: values.ends_at
-      ? new Date(`${values.ends_at}T23:59:59.999Z`).toISOString()
-      : null,
-  });
+  const startsAt = values.starts_at
+    ? new Date(`${values.starts_at}T00:00:00.000Z`).toISOString()
+    : null;
+  const endsAt = values.ends_at
+    ? new Date(`${values.ends_at}T23:59:59.999Z`).toISOString()
+    : null;
+  const { data: mandate, error } = await supabase
+    .from("mandates")
+    .insert({
+      organisation_id: org.id,
+      customer_id: values.customer_id,
+      reference: values.reference,
+      type: values.type,
+      frequency: values.frequency,
+      amount: values.amount,
+      starts_at: startsAt,
+      ends_at: endsAt,
+    })
+    .select("id,metadata")
+    .single();
   if (error) throw new Error("Unable to create mandate.", { cause: error });
 
+  if (values.type === "upi_autopay") {
+    await initiatePhonePeMandate({
+      id: mandate.id,
+      organisationId: org.id,
+      customerId: values.customer_id,
+      reference: values.reference,
+      amount: values.amount,
+      frequency: values.frequency,
+      startsAt,
+      endsAt,
+      metadata:
+        mandate.metadata &&
+        typeof mandate.metadata === "object" &&
+        !Array.isArray(mandate.metadata)
+          ? mandate.metadata
+          : {},
+    });
+  }
+
   revalidatePath("/dashboard/mandates");
-  redirect("/dashboard/mandates");
+  redirect(mandateRoutes.details(mandate.id));
 }

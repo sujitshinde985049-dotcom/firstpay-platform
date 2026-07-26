@@ -14,7 +14,7 @@ describe("PendingMandateAction", () => {
       />,
     );
 
-    expect(markup).toContain("Open PhonePe authorization");
+    expect(markup).toContain("Continue to PhonePe");
     expect(markup).toContain(
       'href="https://mercury.phonepe.com/authorize/123"',
     );

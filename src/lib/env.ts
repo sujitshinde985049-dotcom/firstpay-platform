@@ -24,6 +24,8 @@ const serverSchema = z.object({
   PHONEPE_CLIENT_VERSION: z.string().min(1).optional(),
   PHONEPE_TEST_MID: z.string().min(1).optional(),
   PHONEPE_BASE_URL: optionalUrl,
+  PHONEPE_OAUTH_URL: optionalUrl,
+  PHONEPE_SUBSCRIPTION_URL: optionalUrl,
 });
 export type PublicEnvironment = z.infer<typeof publicSchema>;
 export type ServerEnvironment = z.infer<typeof serverSchema>;
@@ -68,7 +70,8 @@ export const optionalProviderEnvironment = (
       source.PHONEPE_CLIENT_SECRET &&
       source.PHONEPE_CLIENT_VERSION &&
       source.PHONEPE_TEST_MID &&
-      source.PHONEPE_BASE_URL,
+      (source.PHONEPE_BASE_URL ||
+        (source.PHONEPE_OAUTH_URL && source.PHONEPE_SUBSCRIPTION_URL)),
     ),
   },
   cashfree: {

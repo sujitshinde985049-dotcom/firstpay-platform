@@ -90,7 +90,7 @@ export function getPendingMandateAction({
   const href = getPhonePeAuthorizationUrl(metadata);
   return href
     ? {
-        label: "Open PhonePe authorization",
+        label: "Continue to PhonePe",
         href,
       }
     : null;

@@ -15,16 +15,28 @@ const oauthPath = "v1/oauth/token";
 const subscriptionCreatePath = "v3/recurring/subscription/create";
 const tokenRefreshSkewMs = 30_000;
 
-const configurationSchema = z.object({
-  PHONEPE_ENV: z
-    .enum(["UAT", "PRODUCTION", "uat", "production"])
-    .transform((value) => value.toUpperCase() as "UAT" | "PRODUCTION"),
-  PHONEPE_CLIENT_ID: z.string().min(1),
-  PHONEPE_CLIENT_SECRET: z.string().min(1),
-  PHONEPE_CLIENT_VERSION: z.string().min(1),
-  PHONEPE_TEST_MID: z.string().min(1),
-  PHONEPE_BASE_URL: z.url(),
-});
+const configurationSchema = z
+  .object({
+    PHONEPE_ENV: z
+      .enum(["UAT", "PRODUCTION", "uat", "production"])
+      .transform((value) => value.toUpperCase() as "UAT" | "PRODUCTION"),
+    PHONEPE_CLIENT_ID: z.string().min(1),
+    PHONEPE_CLIENT_SECRET: z.string().min(1),
+    PHONEPE_CLIENT_VERSION: z.string().min(1),
+    PHONEPE_TEST_MID: z.string().min(1),
+    PHONEPE_BASE_URL: z.url().optional(),
+    PHONEPE_OAUTH_URL: z.url().optional(),
+    PHONEPE_SUBSCRIPTION_URL: z.url().optional(),
+  })
+  .refine(
+    (value) =>
+      Boolean(value.PHONEPE_BASE_URL) ||
+      Boolean(value.PHONEPE_OAUTH_URL && value.PHONEPE_SUBSCRIPTION_URL),
+    {
+      message:
+        "PhonePe requires a base URL or separate OAuth and Subscription URLs.",
+    },
+  );
 
 export const phonePeSubscriptionCreateSchema = z.object({
   merchantSubscriptionId: z.string().min(1).max(63),
@@ -133,7 +145,8 @@ export class PhonePeAdapter implements PaymentProviderAdapter {
     this.config = {
       provider: "phonepe" as const,
       environment: configuredEnvironment,
-      baseUrl: parsed.data.PHONEPE_BASE_URL,
+      baseUrl:
+        parsed.data.PHONEPE_BASE_URL ?? parsed.data.PHONEPE_SUBSCRIPTION_URL,
       publicIdentifier: parsed.data.PHONEPE_CLIENT_ID,
       secretReference: "PHONEPE_CLIENT_SECRET",
       productionApproved: false,
@@ -152,7 +165,8 @@ export class PhonePeAdapter implements PaymentProviderAdapter {
     });
 
     const response = await this.fetcher(
-      endpoint(this.settings.PHONEPE_BASE_URL, oauthPath),
+      this.settings.PHONEPE_OAUTH_URL ??
+        endpoint(this.settings.PHONEPE_BASE_URL!, oauthPath),
       {
         method: "POST",
         headers: { "content-type": "application/x-www-form-urlencoded" },
@@ -232,7 +246,8 @@ export class PhonePeAdapter implements PaymentProviderAdapter {
       merchantSubscriptionId: payload.data.merchantSubscriptionId,
     });
     const response = await this.fetcher(
-      endpoint(this.settings.PHONEPE_BASE_URL, subscriptionCreatePath),
+      this.settings.PHONEPE_SUBSCRIPTION_URL ??
+        endpoint(this.settings.PHONEPE_BASE_URL!, subscriptionCreatePath),
       {
         method: "POST",
         headers: {

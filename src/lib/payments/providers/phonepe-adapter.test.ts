@@ -138,4 +138,36 @@ describe("PhonePeAdapter", () => {
     );
     expect(fetcher).not.toHaveBeenCalled();
   });
+
+  it("uses separately configured OAuth and Subscription URLs", async () => {
+    const fetcher = vi
+      .fn<typeof fetch>()
+      .mockResolvedValueOnce(
+        jsonResponse({ access_token: "oauth-token", expires_in: 3600 }),
+      )
+      .mockResolvedValueOnce(
+        jsonResponse({
+          success: true,
+          data: { subscriptionId: "subscription-id" },
+        }),
+      );
+    const adapter = new PhonePeAdapter(
+      "sandbox",
+      {
+        ...environment,
+        PHONEPE_BASE_URL: undefined,
+        PHONEPE_OAUTH_URL: "https://api.phonepe.com/oauth",
+        PHONEPE_SUBSCRIPTION_URL:
+          "https://api.phonepe.com/subscriptions/create",
+      },
+      fetcher,
+    );
+
+    await adapter.createMandate(request);
+
+    expect(fetcher.mock.calls[0]![0]).toBe("https://api.phonepe.com/oauth");
+    expect(fetcher.mock.calls[1]![0]).toBe(
+      "https://api.phonepe.com/subscriptions/create",
+    );
+  });
 });
