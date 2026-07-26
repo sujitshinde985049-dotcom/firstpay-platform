@@ -8,6 +8,8 @@ import { hasPermission } from "@/lib/auth/permissions";
 import { getOrganisationFeatures } from "@/lib/features/server";
 import { initiatePhonePeMandate } from "@/lib/mandates/phonepe-initiation";
 import { mandateRoutes } from "@/lib/mandates/routes";
+import { phonePeMandateMetadata } from "@/lib/mandates/phonepe-initiation-rules";
+import { logServerEvent } from "@/lib/observability/logger";
 const customerSchema = z.object({
   id: z.string().uuid().optional(),
   company: z.string().min(2).max(160),
@@ -150,28 +152,66 @@ export async function createMandateAction(formData: FormData) {
       amount: values.amount,
       starts_at: startsAt,
       ends_at: endsAt,
+      metadata:
+        values.type === "upi_autopay"
+          ? phonePeMandateMetadata({}, "initialising")
+          : {},
     })
     .select("id,metadata")
     .single();
   if (error) throw new Error("Unable to create mandate.", { cause: error });
 
   if (values.type === "upi_autopay") {
-    await initiatePhonePeMandate({
-      id: mandate.id,
-      organisationId: org.id,
-      customerId: values.customer_id,
-      reference: values.reference,
-      amount: values.amount,
-      frequency: values.frequency,
-      startsAt,
-      endsAt,
-      metadata:
-        mandate.metadata &&
-        typeof mandate.metadata === "object" &&
-        !Array.isArray(mandate.metadata)
-          ? mandate.metadata
-          : {},
-    });
+    try {
+      await initiatePhonePeMandate({
+        id: mandate.id,
+        organisationId: org.id,
+        customerId: values.customer_id,
+        reference: values.reference,
+        amount: values.amount,
+        frequency: values.frequency,
+        startsAt,
+        endsAt,
+        metadata:
+          mandate.metadata &&
+          typeof mandate.metadata === "object" &&
+          !Array.isArray(mandate.metadata)
+            ? mandate.metadata
+            : {},
+      });
+    } catch (providerError) {
+      logServerEvent("error", "phonepe.mandate_create.unhandled", {
+        organisationId: org.id,
+        mandateId: mandate.id,
+        errorName:
+          providerError instanceof Error ? providerError.name : "UnknownError",
+        errorMessage:
+          providerError instanceof Error
+            ? providerError.message
+            : "Unknown provider initiation error.",
+        stack: providerError instanceof Error ? providerError.stack : undefined,
+      });
+      const { error: failureUpdateError } = await supabase
+        .from("mandates")
+        .update({
+          status: "failed",
+          metadata: phonePeMandateMetadata(
+            mandate.metadata &&
+              typeof mandate.metadata === "object" &&
+              !Array.isArray(mandate.metadata)
+              ? mandate.metadata
+              : {},
+            "configuration_failed",
+          ),
+        })
+        .eq("id", mandate.id)
+        .eq("organisation_id", org.id);
+      if (failureUpdateError) {
+        throw new Error("Unable to record the provider initiation failure.", {
+          cause: failureUpdateError,
+        });
+      }
+    }
   }
 
   revalidatePath("/dashboard/mandates");

@@ -2,6 +2,8 @@ import { describe, expect, it } from "vitest";
 import {
   buildPhonePeMandatePayload,
   extractPhonePeAuthorizationUrl,
+  firstDatabaseWriteError,
+  phonePeMandateMetadata,
   type PhonePeMandateInput,
 } from "./phonepe-initiation-rules";
 
@@ -52,5 +54,41 @@ describe("PhonePe mandate initiation rules", () => {
         data: { redirectUrl: "https://attacker.example/authorize" },
       }),
     ).toBeNull();
+  });
+
+  it("records PhonePe provider intent before the external request starts", () => {
+    expect(
+      phonePeMandateMetadata({ source: "dashboard" }, "initialising"),
+    ).toEqual({
+      source: "dashboard",
+      provider: "phonepe",
+      provider_status: "initialising",
+    });
+  });
+
+  it("preserves the authorization URL in mandate metadata", () => {
+    expect(
+      phonePeMandateMetadata(
+        {},
+        "pending_authorisation",
+        "https://mercury.phonepe.com/authorize/subscription",
+      ),
+    ).toMatchObject({
+      provider: "phonepe",
+      provider_status: "pending_authorisation",
+      authorization_url: "https://mercury.phonepe.com/authorize/subscription",
+    });
+  });
+
+  it("detects a failed Supabase persistence result", () => {
+    const databaseError = { code: "23503" };
+    expect(
+      firstDatabaseWriteError([
+        { error: null },
+        { error: databaseError },
+        { error: null },
+      ]),
+    ).toBe(databaseError);
+    expect(firstDatabaseWriteError([{ error: null }])).toBeNull();
   });
 });

@@ -10,6 +10,25 @@ export type PhonePeMandateInput = {
   metadata: Record<string, unknown>;
 };
 
+export function phonePeMandateMetadata(
+  metadata: Record<string, unknown>,
+  providerStatus: string,
+  authorizationUrl?: string | null,
+) {
+  return {
+    ...metadata,
+    provider: "phonepe",
+    provider_status: providerStatus,
+    ...(authorizationUrl ? { authorization_url: authorizationUrl } : {}),
+  };
+}
+
+export function firstDatabaseWriteError(
+  results: Array<{ error: unknown } | null | undefined>,
+) {
+  return results.find((result) => result?.error)?.error ?? null;
+}
+
 const frequencyMap = {
   daily: "DAILY",
   weekly: "WEEKLY",

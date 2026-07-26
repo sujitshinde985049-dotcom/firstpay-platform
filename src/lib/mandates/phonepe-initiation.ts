@@ -12,6 +12,8 @@ import { logServerEvent } from "@/lib/observability/logger";
 import {
   buildPhonePeMandatePayload,
   extractPhonePeAuthorizationUrl,
+  firstDatabaseWriteError,
+  phonePeMandateMetadata,
   type PhonePeMandateInput,
 } from "./phonepe-initiation-rules";
 import { phonePeReturnUrl } from "./phonepe-routes";
@@ -100,14 +102,25 @@ async function loadPhonePeConfiguration() {
 }
 
 export async function initiatePhonePeMandate(mandate: PhonePeMandateInput) {
-  const admin = createAdminClient();
+  let admin: ReturnType<typeof createAdminClient>;
+  try {
+    admin = createAdminClient();
+  } catch (error) {
+    logUnhandledInitiationFailure(mandate, "admin_client", error);
+    throw error;
+  }
+
   const { data: provider, error: providerError } = await admin
     .from("payment_providers")
     .select("id")
     .eq("key", "phonepe")
     .maybeSingle();
   if (providerError || !provider) {
-    throw new Error("PhonePe provider is not registered.");
+    const error = new Error("PhonePe provider is not registered.", {
+      cause: providerError ?? undefined,
+    });
+    logUnhandledInitiationFailure(mandate, "provider_lookup", error);
+    throw error;
   }
 
   const key = idempotencyKey([
@@ -139,7 +152,11 @@ export async function initiatePhonePeMandate(mandate: PhonePeMandateInput) {
     .select("id")
     .single();
   if (requestError) {
-    throw new Error("Unable to record the PhonePe provider request.");
+    const error = new Error("Unable to record the PhonePe provider request.", {
+      cause: requestError,
+    });
+    logUnhandledInitiationFailure(mandate, "provider_request_insert", error);
+    throw error;
   }
 
   let environment: ProviderEnvironment = "sandbox";
@@ -207,14 +224,13 @@ async function persistProviderResult({
   const admin = createAdminClient();
   const status =
     response.status ?? (response.ok ? "pending_authorisation" : "failed");
-  const metadata = {
-    ...mandate.metadata,
-    provider: "phonepe",
-    provider_status: status,
-    ...(authorizationUrl ? { authorization_url: authorizationUrl } : {}),
-  };
+  const metadata = phonePeMandateMetadata(
+    mandate.metadata,
+    status,
+    authorizationUrl,
+  );
 
-  await Promise.all([
+  const results = await Promise.all([
     admin
       .from("provider_requests")
       .update({
@@ -252,6 +268,7 @@ async function persistProviderResult({
       .eq("id", mandate.id)
       .eq("organisation_id", mandate.organisationId),
   ]);
+  assertDatabaseWrites(results, "PhonePe provider result");
 }
 
 async function persistProviderFailure({
@@ -278,7 +295,7 @@ async function persistProviderFailure({
       error instanceof ConfigurationError ? "configuration" : "provider",
   });
 
-  await Promise.all([
+  const results = await Promise.all([
     admin
       .from("provider_requests")
       .update({ status: "failed", completed_at: new Date().toISOString() })
@@ -310,13 +327,36 @@ async function persistProviderFailure({
       .from("mandates")
       .update({
         status: "failed",
-        metadata: {
-          ...mandate.metadata,
-          provider: "phonepe",
-          provider_status: "failed",
-        },
+        metadata: phonePeMandateMetadata(mandate.metadata, "failed"),
       })
       .eq("id", mandate.id)
       .eq("organisation_id", mandate.organisationId),
   ]);
+  assertDatabaseWrites(results, "PhonePe provider failure");
+}
+
+function assertDatabaseWrites(
+  results: Array<{ error: unknown } | null | undefined>,
+  operation: string,
+) {
+  const error = firstDatabaseWriteError(results);
+  if (error) {
+    throw new Error(`${operation} could not be persisted.`, { cause: error });
+  }
+}
+
+function logUnhandledInitiationFailure(
+  mandate: PhonePeMandateInput,
+  stage: string,
+  error: unknown,
+) {
+  logServerEvent("error", "phonepe.mandate_create.unhandled", {
+    organisationId: mandate.organisationId,
+    mandateId: mandate.id,
+    stage,
+    errorName: error instanceof Error ? error.name : "UnknownError",
+    errorMessage:
+      error instanceof Error ? error.message : "Unknown initiation error.",
+    stack: error instanceof Error ? error.stack : undefined,
+  });
 }

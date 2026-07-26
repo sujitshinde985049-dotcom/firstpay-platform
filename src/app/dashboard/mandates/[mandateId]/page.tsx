@@ -29,6 +29,16 @@ type Provider = {
   name: string;
 };
 
+type ProviderRequest = {
+  id: string;
+  provider_id: string;
+  status: string;
+};
+
+type ProviderError = {
+  safe_message: string;
+};
+
 function databaseErrorCode(error: unknown) {
   if (!error || typeof error !== "object") return "unknown";
   const code = (error as { code?: unknown }).code;
@@ -112,13 +122,46 @@ export default async function Page({
   }
 
   const attempt = attemptError ? null : (attemptData as ProviderAttempt | null);
+  const { data: requestData, error: requestError } = await orchestrationClient
+    .from("provider_requests")
+    .select("id,provider_id,status")
+    .eq("organisation_id", organisation.id)
+    .contains("safe_metadata", { mandate_id: mandate.id })
+    .order("created_at", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+  if (requestError) {
+    logLoadIssue("warn", supportReference, "provider_request", requestError);
+  }
+  const providerRequest = requestError
+    ? null
+    : (requestData as ProviderRequest | null);
+
+  let providerFailure: ProviderError | null = null;
+  if (providerRequest?.id) {
+    const { data: failureData, error: failureError } = await orchestrationClient
+      .from("provider_errors")
+      .select("safe_message")
+      .eq("request_id", providerRequest.id)
+      .eq("organisation_id", organisation.id)
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+    if (failureError) {
+      logLoadIssue("warn", supportReference, "provider_error", failureError);
+    } else {
+      providerFailure = failureData as ProviderError | null;
+    }
+  }
+
   let provider: Provider | null = null;
-  if (attempt?.provider_id) {
+  const providerId = attempt?.provider_id ?? providerRequest?.provider_id;
+  if (providerId) {
     const { data: providerData, error: providerError } =
       await orchestrationClient
         .from("payment_providers")
         .select("key,name")
-        .eq("id", attempt.provider_id)
+        .eq("id", providerId)
         .maybeSingle();
     if (providerError) {
       logLoadIssue("warn", supportReference, "provider", providerError);
@@ -147,8 +190,16 @@ export default async function Page({
       "Provider transaction / subscription reference",
       optionalText(attempt?.provider_reference),
     ],
-    ["Sanitized provider status", optionalText(attempt?.status)],
-    ["Sanitized provider error", optionalText(attempt?.safe_failure_message)],
+    [
+      "Sanitized provider status",
+      optionalText(attempt?.status ?? providerRequest?.status),
+    ],
+    [
+      "Sanitized provider error",
+      optionalText(
+        attempt?.safe_failure_message ?? providerFailure?.safe_message,
+      ),
+    ],
   ];
 
   return (
@@ -180,7 +231,7 @@ export default async function Page({
             providerKey={providerKey}
             metadata={mandate.metadata}
           />
-          {mandate.status === "pending" && !providerKey ? (
+          {mandate.status === "pending" && !providerRequest && !attempt ? (
             <p className="text-sm text-slate-600 dark:text-slate-300">
               No provider request has been recorded for this mandate. There is
               no implemented continuation or retry action to show.
