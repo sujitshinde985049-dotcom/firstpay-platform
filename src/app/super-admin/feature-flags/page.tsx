@@ -2,21 +2,8 @@ import { Flag } from "lucide-react";
 import { PageHeader } from "@/components/admin/page-header";
 import { SubmitButton } from "@/components/admin/submit-button";
 import { saveFeatureFlagAction } from "@/lib/admin/actions";
+import { featureKeys } from "@/lib/features/rules";
 import { createClient } from "@/lib/supabase/server";
-
-const featureKeys = [
-  "upi_autopay",
-  "e_nach",
-  "reports",
-  "api",
-  "webhooks",
-  "multiple_users",
-  "priority_support",
-  "cms",
-  "media_manager",
-  "blog",
-  "analytics",
-];
 
 export default async function FeatureFlagsPage() {
   const supabase = await createClient();
@@ -58,14 +45,22 @@ export default async function FeatureFlagsPage() {
                   name="enabled"
                   value={flag?.enabled ? "false" : "true"}
                 />
-                <span className="text-sm font-medium capitalize">
-                  {key.replaceAll("_", " ")}
+                <span>
+                  <span className="block text-sm font-medium capitalize">
+                    {key.replaceAll("_", " ")}
+                  </span>
+                  <span
+                    className={`mt-1 block text-xs ${flag?.enabled ? "text-emerald-700 dark:text-emerald-400" : "text-slate-500"}`}
+                  >
+                    {flag?.enabled ? "Enabled" : "Disabled"}
+                  </span>
                 </span>
                 <SubmitButton
                   pending="Saving…"
-                  className={`rounded-full px-3 py-1 text-xs font-semibold disabled:opacity-50 ${flag?.enabled ? "bg-emerald-100 text-emerald-700" : "bg-slate-200 text-slate-600 dark:bg-slate-800"}`}
+                  tone={flag?.enabled ? "secondary" : "primary"}
+                  aria-label={`${flag?.enabled ? "Disable" : "Enable"} ${key.replaceAll("_", " ")}`}
                 >
-                  {flag?.enabled ? "Enabled" : "Disabled"}
+                  {flag?.enabled ? "Disable" : "Enable"}
                 </SubmitButton>
               </form>
             );

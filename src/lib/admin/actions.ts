@@ -7,6 +7,7 @@ import { requireSuperAdmin } from "@/lib/auth/permissions";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
 import { recordAuditEvent } from "@/lib/admin/audit";
+import { featureKeys } from "@/lib/features/rules";
 
 const clientSchema = z.object({
   name: z.string().min(2).max(120),
@@ -434,7 +435,7 @@ export async function savePlanAction(formData: FormData) {
 export async function saveFeatureFlagAction(formData: FormData) {
   await requireSuperAdmin();
   const organisationId = String(formData.get("organisation_id") ?? "") || null;
-  const key = z.string().min(2).parse(formData.get("key"));
+  const key = z.enum(featureKeys).parse(formData.get("key"));
   const enabled = formData.get("enabled") === "true";
   const supabase = await createClient();
   let query = supabase.from("feature_flags").select("id").eq("key", key);
@@ -442,15 +443,22 @@ export async function saveFeatureFlagAction(formData: FormData) {
     ? query.eq("organisation_id", organisationId)
     : query.is("organisation_id", null);
   const existing = await query.maybeSingle();
-  if (existing.data)
-    await supabase
-      .from("feature_flags")
-      .update({ enabled })
-      .eq("id", existing.data.id);
-  else
-    await supabase
-      .from("feature_flags")
-      .insert({ organisation_id: organisationId, key, enabled });
+  if (existing.error)
+    throw new Error("Unable to load the feature flag.", {
+      cause: existing.error,
+    });
+  const result = existing.data
+    ? await supabase
+        .from("feature_flags")
+        .update({ enabled })
+        .eq("id", existing.data.id)
+    : await supabase
+        .from("feature_flags")
+        .insert({ organisation_id: organisationId, key, enabled });
+  if (result.error)
+    throw new Error("Unable to save the feature flag.", {
+      cause: result.error,
+    });
   await recordAuditEvent({
     action: "feature_flag.updated",
     entityType: "feature_flag",
